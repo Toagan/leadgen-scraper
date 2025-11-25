@@ -1,0 +1,13 @@
+name,latitude,longitude
+Madrid,40.4168,-3.7038
+Barcelona,41.3851,2.1734
+Valencia,39.4699,-0.3763
+Seville,37.3891,-5.9845
+Zaragoza,41.6488,-0.8891
+Malaga,36.7213,-4.4214
+Murcia,37.9922,-1.1307
+Palma,39.5696,2.6502
+Las Palmas,28.1235,-15.4363
+Bilbao,43.2630,-2.9350
+Alicante,38.3460,-0.4907
+Cordoba,37.8882,-4.7794

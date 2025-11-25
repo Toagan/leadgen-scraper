@@ -1,0 +1,15 @@
+# Ignore Virtual Environment
+venv/
+.env
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore Data Exports (Optional: keep repo clean)
+data_exports/
+leads.csv
+search_history.json
+
+# Mac system files
+.DS_Store

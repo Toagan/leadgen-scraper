@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadGen Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { background-color: #F3F4F6; font-family: 'Inter', sans-serif; color: #111827; }
+        
+        .card-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .tab-btn { position: relative; color: #6B7280; font-weight: 500; transition: all 0.2s; }
+        .tab-btn.active { color: #2563EB; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background-color: #2563EB; }
+        .custom-input { background-color: #F9FAFB; border: 1px solid #E5E7EB; transition: all 0.2s; }
+        .custom-input:focus { background-color: #fff; border-color: #2563EB; outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .precision-card { border: 1px solid #E5E7EB; transition: all 0.2s; }
+        .precision-card:hover { border-color: #BFDBFE; }
+        .precision-card.selected { border-color: #2563EB; background-color: #EFF6FF; position: relative; }
+        .logs-scroll::-webkit-scrollbar { width: 6px; }
+        .logs-scroll::-webkit-scrollbar-track { background: #111827; }
+        .logs-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-6">
+
+    <div class="bg-white rounded-2xl card-shadow w-full max-w-5xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[600px] mb-8">
+        
+        <div class="lg:col-span-7 p-8 flex flex-col">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                        <i class="fas fa-bolt text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight text-gray-900">LeadGen Master</h1>
+                        <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Professional Suite</p>
+                    </div>
+                </div>
+                <div class="bg-green-50 text-green-700 text-[10px] font-bold px-3 py-1.5 rounded-full border border-green-100 flex items-center gap-2">
+                    <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                    System Active
+                </div>
+            </div>
+
+            <div class="flex border-b border-gray-100 mb-8 gap-6">
+                <button class="tab-btn active pb-3 text-sm flex items-center gap-2"><i class="fas fa-map-marked-alt"></i> Google Maps</button>
+                <button class="tab-btn pb-3 text-sm flex items-center gap-2 opacity-40 cursor-not-allowed"><i class="fab fa-google"></i> Google Search</button>
+            </div>
+
+            <div class="space-y-6 flex-1">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Niche / Keyword</label>
+                    <div class="relative group">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                        <input type="text" id="searchTerm" placeholder="e.g. Marketing Agencies, Dentists..." class="custom-input w-full pl-11 pr-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Max Leads</label>
+                        <input type="number" id="numLeads" value="50" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Region</label>
+                        <div class="relative">
+                            <select id="region" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium appearance-none cursor-pointer">
+                                <option value="de">🇩🇪 Germany</option>
+                                <option value="us">🇺🇸 USA</option>
+                                <option value="uk">🇬🇧 UK</option>
+                                <option value="au">🇦🇺 Australia</option>
+                                <option value="ru">🇷🇺 Russia</option>
+                                <option value="cn">🇨🇳 China</option>
+                                <option value="ca">🇨🇦 Canada</option>
+                                <option value="fr">🇫🇷 France</option>
+                                <option value="es">🇪🇸 Spain</option>
+                                <option value="it">🇮🇹 Italy</option>
+                                <option value="br">🇧🇷 Brazil</option>
+                                <option value="in">🇮🇳 India</option>
+                                <option value="jp">🇯🇵 Japan</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-4 top-4 text-gray-400 text-xs pointer-events-none"></i>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Match Precision</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div id="cardLiteral" class="precision-card selected bg-white rounded-xl p-4 cursor-pointer flex flex-col justify-center" onclick="setMatchType('literal')">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-bold text-gray-800">Literal Match</span>
+                                <i class="fas fa-quote-right text-blue-500 opacity-50 text-xs"></i>
+                            </div>
+                            <span class="text-[10px] text-gray-400">Exact phrase match only</span>
+                        </div>
+                        <div id="cardRough" class="precision-card bg-white rounded-xl p-4 cursor-pointer flex flex-col justify-center" onclick="setMatchType('rough')">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-bold text-gray-800">Rough Match</span>
+                                <i class="fas fa-project-diagram text-gray-400 opacity-50 text-xs"></i>
+                            </div>
+                            <span class="text-[10px] text-gray-400">Broad semantic search</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-gray-100">
+                <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+                    <i class="fas fa-play text-xs"></i> Generate Leads
+                </button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 bg-gray-900 p-8 flex flex-col border-l border-gray-800">
+            <div class="flex justify-between items-center mb-6">
+                <div class="text-gray-400 text-xs font-mono uppercase tracking-widest">Live Terminal</div>
+                <div id="counter" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-900/30 px-2 py-1 rounded border border-emerald-800">Ready</div>
+            </div>
+            <div id="consoleOutput" class="flex-1 logs-scroll overflow-y-auto font-mono text-xs space-y-3 pr-2">
+                <div class="text-gray-500">
+                    <span class="text-blue-500">user@leadgen:~$</span> initializing system...<br>
+                    <span class="text-blue-500">user@leadgen:~$</span> waiting for input...
+                </div>
+            </div>
+            <div id="downloadContainer" class="mt-6 pt-6 border-t border-gray-800 hidden">
+                <button id="downloadBtn" onclick="" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-download"></i> Download CSV Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full max-w-5xl">
+        <div class="bg-white rounded-xl card-shadow overflow-hidden border border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Previous Searches</h3>
+                <button onclick="loadHistory()" class="text-gray-400 hover:text-blue-600 transition-colors"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-400 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Date</th>
+                            <th scope="col" class="px-6 py-3">Target Keyword</th>
+                            <th scope="col" class="px-6 py-3">Region</th>
+                            <th scope="col" class="px-6 py-3">Leads</th>
+                            <th scope="col" class="px-6 py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-gray-400">No search history found.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let matchType = 'literal';
+        let pollingInterval = null;
+        let currentFilename = "";
+
+        // Initialize
+        window.onload = loadHistory;
+
+        function setMatchType(type) {
+            matchType = type;
+            const cardLiteral = document.getElementById('cardLiteral');
+            const cardRough = document.getElementById('cardRough');
+
+            if (type === 'literal') {
+                cardLiteral.classList.add('selected');
+                cardRough.classList.remove('selected');
+                cardLiteral.querySelector('i').className = "fas fa-quote-right text-blue-500 opacity-100 text-xs";
+                cardRough.querySelector('i').className = "fas fa-project-diagram text-gray-400 opacity-50 text-xs";
+            } else {
+                cardRough.classList.add('selected');
+                cardLiteral.classList.remove('selected');
+                cardRough.querySelector('i').className = "fas fa-project-diagram text-blue-500 opacity-100 text-xs";
+                cardLiteral.querySelector('i').className = "fas fa-quote-right text-gray-400 opacity-50 text-xs";
+            }
+        }
+
+        function log(msg, type = 'system') {
+            const consoleEl = document.getElementById('consoleOutput');
+            if (consoleEl.innerText.includes('waiting for input')) consoleEl.innerHTML = '';
+            const line = document.createElement('div');
+            if (type === 'success') {
+                line.innerHTML = `<div class="flex gap-2"><span class="text-emerald-500">➜</span><span class="text-gray-300">${msg}</span></div>`;
+            } else if (type === 'error') {
+                line.innerHTML = `<div class="flex gap-2"><span class="text-red-500">✖</span><span class="text-red-400">${msg}</span></div>`;
+            } else {
+                line.innerHTML = `<div class="flex gap-2 mt-2 mb-1"><span class="text-blue-500 font-bold">INFO:</span><span class="text-gray-400">${msg}</span></div>`;
+            }
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        async function startScrape() {
+            const term = document.getElementById('searchTerm').value;
+            const leads = document.getElementById('numLeads').value;
+            const region = document.getElementById('region').value;
+
+            if(!term) { alert("Please enter a keyword"); return; }
+
+            document.getElementById('consoleOutput').innerHTML = '';
+            document.getElementById('downloadContainer').classList.add('hidden');
+            log(`Initializing job for: "${term}" in [${region.toUpperCase()}]...`, 'system');
+            
+            const runBtn = document.getElementById('runBtn');
+            runBtn.disabled = true;
+            runBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Processing...`;
+            runBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                const res = await fetch('/run-scrape', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ source: 'maps', search_term: term, num_leads: leads, match_type: matchType, region: region })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    log("Connection established. Starting scan...", 'system');
+                    startPolling();
+                } else {
+                    log("Error: " + data.message, 'error');
+                    resetBtn();
+                }
+            } catch(e) {
+                log("Connection failure to backend.", 'error');
+                resetBtn();
+            }
+        }
+
+        function startPolling() {
+            if(pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                const res = await fetch('/status');
+                const status = await res.json();
+                
+                const counter = document.getElementById('counter');
+                counter.innerText = `${status.total_leads} LEADS`;
+                if (status.total_leads > 0) counter.className = "text-xs font-mono font-bold text-white bg-blue-600 px-2 py-1 rounded shadow-lg shadow-blue-900/50";
+
+                if (status.new_logs && status.new_logs.length > 0) {
+                    status.new_logs.forEach(leadMsg => log(leadMsg, 'success'));
+                }
+                
+                // Keep track of the current file being generated
+                if(status.current_filename) currentFilename = status.current_filename;
+
+                if(!status.is_running) {
+                    clearInterval(pollingInterval);
+                    log("Job Finished.", 'system');
+                    resetBtn();
+                    loadHistory(); // Refresh history table
+                    if(status.total_leads > 0) {
+                        const dlContainer = document.getElementById('downloadContainer');
+                        const dlBtn = document.getElementById('downloadBtn');
+                        dlContainer.classList.remove('hidden');
+                        // Update download button to point to specific file
+                        dlBtn.onclick = function() { window.location.href = `/download/${currentFilename}`; };
+                    }
+                }
+            }, 2000);
+        }
+
+        function resetBtn() {
+            const runBtn = document.getElementById('runBtn');
+            runBtn.disabled = false;
+            runBtn.innerHTML = `<i class="fas fa-play text-xs"></i> Generate Leads`;
+            runBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('/history');
+                const history = await res.json();
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = '';
+
+                if (history.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">No search history found.</td></tr>`;
+                    return;
+                }
+
+                history.forEach(item => {
+                    const row = `
+                        <tr class="bg-white hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${item.date}</td>
+                            <td class="px-6 py-4 font-semibold text-blue-600">${item.term}</td>
+                            <td class="px-6 py-4"><span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded border border-gray-200">${item.region}</span></td>
+                            <td class="px-6 py-4 text-gray-600">${item.leads_requested} Found</td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="/download/${item.filename}" class="font-medium text-blue-600 hover:underline flex items-center justify-end gap-1">
+                                    Download <i class="fas fa-download text-xs"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (e) {
+                console.error("Failed to load history", e);
+            }
+        }
+    </script>
+</body>
+</html>
