@@ -1,0 +1,13 @@
+name,latitude,longitude
+Toronto,43.6532,-79.3832
+Montreal,45.5017,-73.5673
+Vancouver,49.2827,-123.1207
+Calgary,51.0447,-114.0719
+Edmonton,53.5461,-113.4938
+Ottawa,45.4215,-75.6972
+Winnipeg,49.8951,-97.1384
+Quebec City,46.8139,-71.2080
+Hamilton,43.2557,-79.8711
+Halifax,44.6488,-63.5752
+London,42.9849,-81.2453
+Victoria,48.4284,-123.3656

@@ -1,0 +1,16 @@
+name,latitude,longitude
+Moscow,55.7558,37.6173
+Saint Petersburg,59.9343,30.3351
+Novosibirsk,55.0084,82.9357
+Yekaterinburg,56.8389,60.6057
+Kazan,55.7961,49.1064
+Nizhny Novgorod,56.3269,44.0059
+Chelyabinsk,55.1644,61.4368
+Samara,53.2415,50.2212
+Omsk,54.9885,73.3242
+Rostov-on-Don,47.2357,39.7015
+Ufa,54.7388,55.9721
+Krasnoyarsk,56.0153,92.8932
+Voronezh,51.6608,39.1700
+Perm,58.0098,56.2277
+Volgograd,48.7080,44.5133

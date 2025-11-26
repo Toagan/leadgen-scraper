@@ -1,0 +1,14 @@
+name,latitude,longitude
+Shanghai,31.2304,121.4737
+Beijing,39.9042,116.4074
+Guangzhou,23.1291,113.2644
+Shenzhen,22.5431,114.0579
+Chengdu,30.5728,104.0668
+Tianjin,39.0842,117.2009
+Wuhan,30.5928,114.3055
+Dongguan,23.0208,113.7518
+Chongqing,29.4316,106.9123
+Hangzhou,30.2741,120.1551
+Nanjing,32.0603,118.7969
+Xi'an,34.3416,108.9398
+Hong Kong,22.3193,114.1694

@@ -1,0 +1,11 @@
+name,latitude,longitude
+Zurich,47.3769,8.5417
+Geneva,46.2044,6.1432
+Basel,47.5596,7.5886
+Lausanne,46.5197,6.6323
+Bern,46.9480,7.4474
+Winterthur,47.4988,8.7238
+Lucerne,47.0502,8.3093
+St. Gallen,47.4245,9.3767
+Lugano,46.0037,8.9511
+Biel/Bienne,47.1368,7.2468

@@ -1,0 +1,41 @@
+name,latitude,longitude
+Vienna,48.2082,16.3738
+Graz,47.0707,15.4395
+Linz,48.3069,14.2858
+Salzburg,47.8095,13.0550
+Innsbruck,47.2692,11.4041
+Klagenfurt,46.6365,14.3122
+Villach,46.6111,13.8558
+Wels,48.1575,14.0289
+Sankt Pölten,48.2047,15.6256
+Dornbirn,47.4125,9.7417
+Wiener Neustadt,47.8151,16.2465
+Steyr,48.0444,14.4147
+Feldkirch,47.2374,9.5980
+Bregenz,47.5008,9.7423
+Leonding,48.2667,14.2500
+Klosterneuburg,48.3042,16.3167
+Baden bei Wien,48.0075,16.2344
+Wolfsberg,46.8407,14.8458
+Leoben,47.3800,15.0944
+Krems an der Donau,48.4092,15.6142
+Traun,48.2217,14.2397
+Amstetten,48.1167,14.8667
+Lustenau,47.4297,9.6597
+Kapfenberg,47.4333,15.2833
+Hallein,47.6831,13.0969
+Mödling,48.0833,16.2667
+Kufstein,47.5833,12.1667
+Traiskirchen,48.0167,16.3000
+Schwechat,48.1411,16.4786
+Braunau am Inn,48.2583,13.0333
+Stockerau,48.3833,16.2167
+Saalfelden am Steinernen Meer,47.4267,12.8483
+Tulln an der Donau,48.3333,16.0500
+Ansfelden,48.2083,14.2889
+Hohenems,47.3667,9.6667
+Bruck an der Mur,47.4167,15.2667
+Spittal an der Drau,46.7833,13.4833
+Telfs,47.3000,11.0667
+Bludenz,47.1333,9.8167
+Eisenstadt,47.8388,16.5338
