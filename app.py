@@ -4,313 +4,321 @@ import json
 import time
 import threading
 import requests
+import re
+import pandas as pd
 from datetime import datetime
+from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 
 # 1. Setup & Configuration
 load_dotenv()
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
-# Configuration
 API_KEY = os.getenv("SERPER_API_KEY")
 
-# Map regions to your data files
-# 'de' now correctly points to 'data/cities.txt' which contains your State data
-REGION_FILES = {
-    'de': 'data/cities.txt', 
-    'au': 'data/cities_au.txt',
-    'ch': 'data/cities_ch.txt',      
-    'us': 'data/cities_us.txt',
-    'uk': 'data/cities_uk.txt',
-    'fr': 'data/cities_fr.txt',
-    'es': 'data/cities_es.txt',
-    'it': 'data/cities_it.txt',
-    'br': 'data/cities_br.txt',
-    'in': 'data/cities_in.txt',
-    'jp': 'data/cities_jp.txt'
-}
-
-# Ensure directories exist for data storage
+# Directories
 DATA_DIR = "data_exports"
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
+UPLOAD_FOLDER = "uploads"
+for folder in [DATA_DIR, UPLOAD_FOLDER]:
+    if not os.path.exists(folder): os.makedirs(folder)
 
 HISTORY_FILE = "search_history.json"
 
-# Global Job Status
+# Region Files
+REGION_FILES = {
+    'de': 'data/cities.txt', 'us': 'data/cities_us.txt', 'uk': 'data/cities_uk.txt',
+    'fr': 'data/cities_fr.txt', 'es': 'data/cities_es.txt', 'it': 'data/cities_it.txt',
+    'au': 'data/cities_au.txt', 'ch': 'data/cities_ch.txt'
+}
+
+# Global Status
 job_status = {
     "is_running": False,
-    "current_city": "",
+    "current_city": "", 
     "total_leads": 0,
-    "api_calls": 0, # Tracks Serper Credits
-    "status_message": "Idle",
+    "api_calls": 0,
     "new_logs": [],
     "current_filename": ""
 }
 
+# --- HELPER CLASSES ---
+
+class WebsiteScraper:
+    """Helper to visit websites and find emails."""
+    def __init__(self):
+        self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124 Safari/537.36'}
+
+    def extract_emails(self, url):
+        try:
+            if not url.startswith('http'): url = 'https://' + url
+            # Fast timeout (3s) to keep script moving
+            response = requests.get(url, headers=self.headers, timeout=3)
+            if response.status_code != 200: return []
+            
+            # Simple Regex for emails
+            email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+            soup = BeautifulSoup(response.text, 'lxml')
+            emails = set(re.findall(email_pattern, soup.get_text()))
+            
+            # Filter junk (images, fonts)
+            return [e for e in emails if not e.endswith(('.png', '.jpg', '.gif', '.svg', '.webp'))][:3] # Max 3 emails
+        except: return []
+
 # --- HELPER FUNCTIONS ---
 
+def extract_domain(url_string):
+    try:
+        if not isinstance(url_string, str) or not url_string.strip(): return ""
+        url_string = url_string.strip()
+        if not url_string.startswith(('http://', 'https://')): url_string = 'https://' + url_string
+        parsed = urlparse(url_string)
+        domain = parsed.netloc
+        if domain.startswith('www.'): domain = domain[4:]
+        return domain.lower()
+    except: return ""
+
 def save_to_history(term, region, leads_count, filename):
-    """Saves the search details to a JSON file."""
+    region_label = region if isinstance(region, str) else ", ".join(region).upper()
     entry = {
         "timestamp": time.time(),
         "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "term": term,
-        "region": region.upper(),
-        "leads_found": leads_count,
-        "filename": filename
+        "term": term, "region": region_label, "leads_found": leads_count, "filename": filename
     }
-    
     history = []
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, 'r') as f:
             try: history = json.load(f)
             except: history = []
-    
-    # Add new entry to the TOP of the list
     history.insert(0, entry)
-    
-    with open(HISTORY_FILE, 'w') as f:
-        json.dump(history, f, indent=4)
+    with open(HISTORY_FILE, 'w') as f: json.dump(history, f, indent=4)
 
 def get_places_by_gps(query, lat, lon, country_code, start_index=0):
-    """Calls the Serper.dev 'places' endpoint."""
     url = "https://google.serper.dev/places"
-    location_bias = f"@{lat},{lon},14z"
-    
     if country_code == 'uk': country_code = 'gb'
-
     payload = json.dumps({
-        "q": query,
-        "gl": country_code, 
-        "hl": country_code, 
-        "ll": location_bias,
-        "start": start_index
+        "q": query, "gl": country_code, "hl": country_code, 
+        "ll": f"@{lat},{lon},14z", "start": start_index
     })
-    
-    headers = {
-        'X-API-KEY': API_KEY,
-        'Content-Type': 'application/json'
-    }
+    headers = {'X-API-KEY': API_KEY, 'Content-Type': 'application/json'}
+    try: return requests.post(url, headers=headers, data=payload).json()
+    except: return None
 
-    try:
-        response = requests.request("POST", url, headers=headers, data=payload)
-        return response.json()
-    except Exception as e:
-        print(f"⚠️ API Error: {e}")
-        return None
+def get_search_results(query, page=1):
+    url = "https://google.serper.dev/search"
+    payload = json.dumps({"q": query, "page": page, "num": 10, "gl": "us", "hl": "en"})
+    headers = {'X-API-KEY': API_KEY, 'Content-Type': 'application/json'}
+    try: return requests.post(url, headers=headers, data=payload).json()
+    except: return None
 
-def scraper_worker(search_term, limit_val, limit_mode, match_type, region, filename, sub_region=None):
+# --- WORKERS ---
+
+def scraper_worker(params):
+    """
+    params: {term, limit_val, limit_mode, match_type, regions, filename, sub_region, 
+             skip_no_website, min_rating, scrape_emails}
+    """
+    global job_status
+    job_status["is_running"] = True
+    job_status["total_leads"] = 0
+    job_status["api_calls"] = 0
+    job_status["new_logs"] = []
+    job_status["current_filename"] = params['filename']
+    job_seen_ids = set()
+
+    # Settings
+    limit_val = int(params.get('limit_val', 50))
+    limit_mode = params.get('limit_mode', 'leads')
+    scrape_emails = params.get('scrape_emails', False)
+    skip_no_website = params.get('skip_no_website', False)
+    try: min_rating = float(params.get('min_rating', 0))
+    except: min_rating = 0.0
+
+    email_scraper = WebsiteScraper() if scrape_emails else None
+
+    # CSV Init
+    full_path = os.path.join(DATA_DIR, params['filename'])
+    with open(full_path, mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        headers = ['Search Term', 'Country', 'City', 'Name', 'Address', 'Phone', 'Website', 'Rating', 'Place ID']
+        if scrape_emails: headers.insert(7, 'Scraped Emails') # Add column if enabled
+        writer.writerow(headers)
+
+    countries = params['regions'] if isinstance(params['regions'], list) else [params['regions']]
+    target_states = params['sub_region'] if params['sub_region'] else []
+
+    final_query = f'"{params["term"]}"' if params['match_type'] == 'literal' else params['term']
+
+    for country_code in countries:
+        if not job_status["is_running"]: break
+        job_status["new_logs"].append(f"🌍 Starting Country: {country_code.upper()}")
+
+        target_file = REGION_FILES.get(country_code)
+        if not target_file: continue
+
+        cities = []
+        try:
+            with open(target_file, 'r', encoding='utf-8-sig') as f:
+                for line in f:
+                    if not line or line.lower().startswith("name,latitude"): continue
+                    parts = line.strip().split(',')
+                    if len(parts) >= 3:
+                        city_state = parts[3].strip() if len(parts) > 3 else ""
+                        if country_code == 'de' and target_states and city_state not in target_states: continue
+                        cities.append({"name": parts[0].strip(), "lat": parts[1].strip(), "lon": parts[2].strip()})
+        except: continue
+
+        for city in cities:
+            if not job_status["is_running"]: break
+            if limit_mode == 'leads' and job_status["total_leads"] >= limit_val: break
+            if limit_mode == 'credits' and job_status["api_calls"] >= limit_val: break
+            
+            job_status["current_city"] = f"{city['name']} ({country_code.upper()})"
+            
+            for page in range(15): # Max 15 pages (300 results) per city
+                if limit_mode == 'leads' and job_status["total_leads"] >= limit_val: break
+                
+                data = get_places_by_gps(f"{final_query} in {city['name']}", city['lat'], city['lon'], country_code, page * 20)
+                job_status["api_calls"] += 1
+                
+                if not data or 'places' not in data or not data['places']: break
+                
+                new_count = 0
+                with open(full_path, mode='a', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    for p in data['places']:
+                        pid = p.get('cid') or p.get('place_id')
+                        website = p.get('website', '')
+                        rating = p.get('rating', 0)
+
+                        # --- FILTERS ---
+                        if pid in job_seen_ids: continue
+                        if skip_no_website and not website: continue
+                        if rating < min_rating: continue
+                        # ---------------
+
+                        job_seen_ids.add(pid)
+                        new_count += 1
+                        job_status["total_leads"] += 1
+                        
+                        row = [final_query, country_code.upper(), city['name'], p.get('title'), p.get('address'), p.get('phoneNumber'), website, rating, pid]
+                        
+                        # --- EMAIL SCRAPING ---
+                        if scrape_emails:
+                            emails = []
+                            if website:
+                                # Update status so user knows why it's pausing
+                                job_status["current_city"] = f"Scraping site: {extract_domain(website)}..." 
+                                emails = email_scraper.extract_emails(website)
+                            row.insert(7, "; ".join(emails))
+                            if emails: job_status["new_logs"].append(f"📧 Found Email: {emails[0]} for {p.get('title')}")
+                        else:
+                             job_status["new_logs"].append(f"{p.get('title')} ({city['name']})")
+                        
+                        writer.writerow(row)
+                        
+                if new_count == 0: break
+                time.sleep(0.2)
+
+    job_status["is_running"] = False
+    save_to_history(params['term'], countries, job_status["total_leads"], params['filename'])
+
+def linkedin_worker(companies, roles, limit_val, filename):
     global job_status
     job_status["is_running"] = True
     job_status["total_leads"] = 0
     job_status["api_calls"] = 0
     job_status["new_logs"] = []
     job_status["current_filename"] = filename
-    
-    # Global Deduplication Set for this specific job
-    # This ensures we NEVER save the same Place ID twice in one run
-    job_seen_ids = set()
-
-    try:
-        limit_val = int(limit_val)
-    except:
-        limit_val = 50
-    
-    # Display Text Logic
-    location_msg = region.upper()
-    target_states = []
-    
-    # Handle Multi-Select List vs String
-    if sub_region:
-        if isinstance(sub_region, list):
-            target_states = [s for s in sub_region if s] # Remove empty strings
-            if target_states:
-                location_msg += f" ({len(target_states)} States)"
-        else:
-            target_states = [sub_region]
-            location_msg += f" ({sub_region})"
-    
-    limit_msg = f"{limit_val} Leads" if limit_mode == 'leads' else f"{limit_val} Credits"
-    job_status["status_message"] = f"Scraping '{search_term}' in {location_msg} (Stop: {limit_msg})..."
-    
-    final_query = search_term
-    if match_type == 'literal':
-        final_query = f'"{search_term}"'
-    
-    target_file = REGION_FILES.get(region, 'data/cities.txt')
     full_path = os.path.join(DATA_DIR, filename)
-
-    # --- 1. LOAD CITIES & FILTER BY STATE ---
-    cities = []
-    try:
-        with open(target_file, 'r', encoding='utf-8-sig') as f:
-            for line in f:
-                line = line.strip()
-                # Skip header or empty lines
-                if not line or line.lower().startswith("name,latitude"):
-                    continue
-                
-                parts = line.split(',')
-                if len(parts) >= 3:
-                    city_name = parts[0].strip()
-                    city_lat = parts[1].strip()
-                    city_lon = parts[2].strip()
-                    # Get State from 4th column if it exists
-                    city_state = parts[3].strip() if len(parts) > 3 else ""
-
-                    # Filter Logic:
-                    # If user selected specific states (and didn't select "All"),
-                    # skip cities that don't match.
-                    if region == 'de' and target_states:
-                        if city_state not in target_states:
-                            continue
-
-                    cities.append({
-                        "name": city_name, 
-                        "lat": city_lat, 
-                        "lon": city_lon,
-                        "state": city_state
-                    })
-        
-        if not cities:
-            job_status["status_message"] = f"No cities found for selected states."
-            job_status["is_running"] = False
-            return
-
-        job_status["new_logs"].append(f"Targeting {len(cities)} cities...")
-
-    except FileNotFoundError:
-        error_msg = f"Error: City list {target_file} not found."
-        print(error_msg)
-        job_status["status_message"] = error_msg
-        job_status["is_running"] = False
-        return
-
-    # --- 2. INITIALIZE CSV ---
     with open(full_path, mode='w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        # Optimized for Agency Work: Includes specific placeholder for Email
-        writer.writerow(['Search Term', 'City', 'State', 'Name', 'Address', 'Phone', 'Website', 'Email (Pending)', 'Rating', 'Place ID', 'Lat', 'Lon'])
-
-    # --- 3. SCRAPE LOOP ---
-    for city in cities:
-        # Check limits before starting a new city
-        if not job_status["is_running"]: break
-        if limit_mode == 'leads' and job_status["total_leads"] >= limit_val: break
-        if limit_mode == 'credits' and job_status["api_calls"] >= limit_val: break
-
-        job_status["current_city"] = city['name']
-        city_specific_query = f"{final_query} in {city['name']}"
-        
-        # Pagination: 5 pages (100 results) Safety Cap per City
-        for page in range(5): 
-            # Check Limits before API call
-            if limit_mode == 'leads' and job_status["total_leads"] >= limit_val: break
-            if limit_mode == 'credits' and job_status["api_calls"] >= limit_val: break
-            if not job_status["is_running"]: break
-            
-            # --- API CALL ---
-            data = get_places_by_gps(city_specific_query, city['lat'], city['lon'], region, page * 20)
-            job_status["api_calls"] += 1 
-            
-            # Stop if no data returned
-            if not data or 'places' not in data or not data['places']: 
-                break
-
-            new_items_count = 0
-            with open(full_path, mode='a', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                for p in data['places']:
-                    if limit_mode == 'leads' and job_status["total_leads"] >= limit_val: break
-
-                    pid = p.get('cid') or p.get('place_id')
-                    
-                    # --- DUPLICATE CHECK ---
-                    # If we have seen this Place ID in this job already, SKIP IT.
-                    if pid not in job_seen_ids:
-                        job_seen_ids.add(pid)
-                        new_items_count += 1
+        writer.writerow(['Input URL', 'Domain', 'Role', 'Title', 'LinkedIn URL', 'Snippet'])
+    for index, raw_url in enumerate(companies):
+        if not job_status["is_running"] or job_status["total_leads"] >= int(limit_val): break
+        domain = extract_domain(raw_url)
+        if not domain: continue
+        job_status["current_city"] = f"{domain}"
+        for role in roles:
+            query = f'site:linkedin.com/in/ "{domain}" "{role}"'
+            for page in range(1, 4):
+                data = get_search_results(query, page)
+                job_status["api_calls"] += 1
+                if not data or "organic" not in data: break
+                results = data["organic"]
+                if not results: break
+                with open(full_path, mode='a', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    for item in results:
                         job_status["total_leads"] += 1
-                        
-                        company_name = p.get('title', 'Unknown')
-                        job_status["new_logs"].append(f"{company_name} ({city['name']})")
-                        
-                        writer.writerow([
-                            final_query, 
-                            city['name'], 
-                            city['state'], 
-                            company_name, 
-                            p.get('address', ''),
-                            p.get('phoneNumber', ''), 
-                            p.get('website', ''),     
-                            "", # Empty Email column for enrichment tools
-                            p.get('rating', ''),
-                            pid, city['lat'], city['lon']
-                        ])
-            
-            # If this page had 0 *new* items (or API returned duplicates), stop paginating this city
-            if new_items_count == 0: break
-            time.sleep(0.2) # Gentle delay for API stability
-
+                        job_status["new_logs"].append(f"Found: {item.get('title')} @ {domain}")
+                        writer.writerow([raw_url, domain, role, item.get('title'), item.get('link'), item.get('snippet')])
+                if len(results) < 10: break
+                time.sleep(0.5)
     job_status["is_running"] = False
-    
-    # Final Status Logic
-    if limit_mode == 'leads' and job_status["total_leads"] >= limit_val:
-        job_status["status_message"] = "Target Lead count reached."
-    elif limit_mode == 'credits' and job_status["api_calls"] >= limit_val:
-        job_status["status_message"] = "API Credit limit reached."
-    else:
-        job_status["status_message"] = "Job finished (End of list)."
-        
-    job_status["current_city"] = "Done"
-    save_to_history(search_term, region, job_status["total_leads"], filename)
+    save_to_history("LinkedIn Search", "Global", job_status["total_leads"], filename)
 
 # --- ROUTES ---
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def index(): return render_template('index.html')
+
+@app.route('/upload-csv', methods=['POST'])
+def upload_csv():
+    if 'file' not in request.files: return jsonify({"error": "No file"})
+    file = request.files['file']
+    if file:
+        filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(filepath)
+        domains = set()
+        try:
+            if file.filename.endswith('.csv'): df = pd.read_csv(filepath)
+            else: df = pd.read_excel(filepath)
+            target_col = df.columns[0]
+            for col in df.columns:
+                if any(x in str(col).lower() for x in ['web', 'url', 'site', 'link']):
+                    target_col = col; break
+            for item in df[target_col].dropna():
+                d = extract_domain(str(item))
+                if d: domains.add(d)
+            return jsonify({"status": "success", "domains": list(domains), "count": len(domains)})
+        except Exception as e: return jsonify({"error": str(e)})
 
 @app.route('/run-scrape', methods=['POST'])
 def run_scrape():
-    if job_status["is_running"]:
-        return jsonify({"status": "error", "message": "Job already running."})
-    
+    if job_status["is_running"]: return jsonify({"status": "error", "message": "Job running"})
     data = request.json
+    filename = f"Maps_{data.get('search_term')}_{int(time.time())}.csv"
     
-    # Filename generation
-    safe_term = "".join([c if c.isalnum() else "_" for c in data.get('search_term')])
-    timestamp = int(time.time())
+    # Pass all new filter params to the worker
+    params = {
+        'term': data.get('search_term'), 'limit_val': data.get('limit_value'),
+        'limit_mode': data.get('limit_mode'), 'match_type': data.get('match_type'),
+        'regions': data.get('region'), 'sub_region': data.get('sub_region'),
+        'filename': filename,
+        'skip_no_website': data.get('skip_no_website'),
+        'min_rating': data.get('min_rating'),
+        'scrape_emails': data.get('scrape_emails')
+    }
     
-    region_code = data.get('region')
-    sub_region = data.get('sub_region')
-    
-    filename_suffix = region_code
-    if isinstance(sub_region, list) and len(sub_region) > 0:
-        if "" not in sub_region: filename_suffix += "_MultiState"
-    elif isinstance(sub_region, str) and sub_region:
-        filename_suffix += f"_{sub_region}"
-        
-    filename = f"{safe_term}_{filename_suffix}_{timestamp}.csv"
-
-    thread = threading.Thread(
-        target=scraper_worker, 
-        args=(
-            data.get('search_term'), 
-            data.get('limit_value'), 
-            data.get('limit_mode'),  # 'leads' or 'credits'
-            data.get('match_type'), 
-            data.get('region'), 
-            filename,
-            sub_region
-        )
-    )
+    thread = threading.Thread(target=scraper_worker, args=(params,))
     thread.daemon = True
     thread.start()
+    return jsonify({"status": "success"})
 
-    return jsonify({"status": "success", "message": "Started scraping."})
+@app.route('/run-linkedin-scrape', methods=['POST'])
+def run_linkedin_scrape():
+    if job_status["is_running"]: return jsonify({"status": "error", "message": "Job running"})
+    data = request.json
+    filename = f"LinkedIn_{int(time.time())}.csv"
+    thread = threading.Thread(target=linkedin_worker, args=(
+        data.get('companies'), data.get('roles'), data.get('limit'), filename
+    ))
+    thread.daemon = True
+    thread.start()
+    return jsonify({"status": "success"})
 
 @app.route('/status', methods=['GET'])
 def status():
@@ -321,15 +329,12 @@ def status():
 @app.route('/history', methods=['GET'])
 def get_history():
     if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, 'r') as f:
-            try: return jsonify(json.load(f))
-            except: return jsonify([])
+        with open(HISTORY_FILE, 'r') as f: return jsonify(json.load(f))
     return jsonify([])
 
 @app.route('/download/<path:filename>')
 def download_file(filename):
-    try: return send_from_directory(DATA_DIR, filename, as_attachment=True)
-    except Exception as e: return str(e), 404
+    return send_from_directory(DATA_DIR, filename, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
