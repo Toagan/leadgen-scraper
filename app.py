@@ -276,7 +276,7 @@ def request_feature():
     data = request.json
     feature = data.get('feature_text')
     
-    # Save to a simple text file (on Render this wipes daily, but works for now)
+    # Save to a simple text file
     with open("feature_requests.txt", "a") as f:
         f.write(f"[{datetime.now()}] {current_user.email}: {feature}\n")
         

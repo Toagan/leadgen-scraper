@@ -17,15 +17,15 @@
         /* Animations */
         @keyframes wave {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
+            50% { transform: translateY(-10px); }
         }
         @keyframes fadeOut {
             0% { opacity: 1; }
             100% { opacity: 0; visibility: hidden; }
         }
         
-        .animate-wave { animation: wave 2s infinite ease-in-out; }
-        .loader-fade { animation: fadeOut 0.8s ease-out 2.5s forwards; } /* Starts fading at 2.5s */
+        .animate-wave { animation: wave 3s infinite ease-in-out; }
+        .loader-fade { animation: fadeOut 0.8s ease-out 2.5s forwards; } /* Fades out after 2.5s */
 
         /* UI Elements */
         .tab-btn { position: relative; color: #6B7280; font-weight: 500; transition: all 0.2s; cursor: pointer; }
@@ -50,13 +50,14 @@
     </script>
 
     <div id="loader" class="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center loader-fade">
-        <div class="flex items-center gap-4 mb-4 animate-wave">
-            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-300 transform rotate-3">
-                <i class="fas fa-water text-3xl text-white"></i>
-            </div>
+        <div class="text-center animate-wave">
+            <h1 class="text-6xl font-extrabold text-gray-900 tracking-tighter mb-4">
+                Blue<span class="text-blue-600">Reach</span>
+            </h1>
+            <p class="text-lg text-gray-500 font-medium tracking-wide">
+                We help you scale your revenue operations
+            </p>
         </div>
-        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight animate-pulse">Blue Reach <span class="text-blue-600">Agency</span></h1>
-        <p class="text-sm text-gray-400 mt-2 font-medium tracking-widest uppercase">Initializing Core...</p>
     </div>
 
     <div class="bg-white rounded-2xl card-shadow w-full max-w-7xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[650px] mb-8">
@@ -130,6 +131,8 @@
                         <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="us" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇺🇸 USA</span></label>
                         <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="uk" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇬🇧 UK</span></label>
                         <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="fr" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇫🇷 France</span></label>
+                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="es" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇪🇸 Spain</span></label>
+                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="it" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇮🇹 Italy</span></label>
                     </div></div>
                 </div>
 
