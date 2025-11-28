@@ -7,351 +7,330 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        body { background-color: #F3F4F6; font-family: 'Inter', sans-serif; color: #111827; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { background-color: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; overflow: hidden; }
         
-        .card-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
-        .custom-input { background-color: #F9FAFB; border: 1px solid #E5E7EB; transition: all 0.2s; }
-        .custom-input:focus { background-color: #fff; border-color: #2563EB; outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+        .custom-input { background-color: #F8FAFC; border: 1px solid #E2E8F0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .custom-input:focus { background-color: #fff; border-color: #3B82F6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         
         /* Animations */
-        @keyframes wave {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        @keyframes fadeOut {
-            0% { opacity: 1; }
-            100% { opacity: 0; visibility: hidden; }
-        }
-        
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
         .animate-wave { animation: wave 3s infinite ease-in-out; }
-        .loader-fade { animation: fadeOut 0.8s ease-out 2.5s forwards; } /* Fades out after 2.5s */
+        .loader-fade { animation: fadeOut 0.6s ease-out 2.5s forwards; }
 
-        /* UI Elements */
-        .tab-btn { position: relative; color: #6B7280; font-weight: 500; transition: all 0.2s; cursor: pointer; }
-        .tab-btn.active { color: #2563EB; }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background-color: #2563EB; }
+        /* UI Components */
+        .tab-btn { position: relative; color: #64748B; font-weight: 500; transition: all 0.2s; }
+        .tab-btn:hover { color: #1E293B; }
+        .tab-btn.active { color: #3B82F6; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -8px; left: 0; width: 100%; height: 2px; background-color: #3B82F6; border-radius: 2px; }
         
-        .toggle-checkbox:checked { right: 0; border-color: #2563EB; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #2563EB; }
+        .toggle-checkbox:checked { right: 0; border-color: #3B82F6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #3B82F6; }
         
-        .multi-select-dropdown { max-height: 0; opacity: 0; transition: all 0.2s ease-in-out; overflow: hidden; position: absolute; z-index: 50; width: 100%; background: white; border: 1px solid #E5E7EB; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .multi-select-dropdown { max-height: 0; opacity: 0; transition: all 0.2s ease-in-out; overflow: hidden; position: absolute; z-index: 50; width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .multi-select-dropdown.open { max-height: 300px; opacity: 1; overflow-y: auto; margin-top: 0.5rem; }
-        
-        .logs-scroll::-webkit-scrollbar { width: 6px; }
-        .logs-scroll::-webkit-scrollbar-track { background: #111827; }
-        .logs-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-10 px-6 relative">
+<body class="h-screen flex flex-col">
 
-    <script>
-        const IS_LOGGED_IN = {{ 'true' if user.is_authenticated else 'false' }};
-    </script>
+    <script>const IS_LOGGED_IN = {{ 'true' if user.is_authenticated else 'false' }};</script>
 
     <div id="loader" class="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center loader-fade">
         <div class="text-center animate-wave">
-            <h1 class="text-6xl font-extrabold text-gray-900 tracking-tighter mb-4">
-                Blue<span class="text-blue-600">Reach</span>
-            </h1>
-            <p class="text-lg text-gray-500 font-medium tracking-wide">
-                We help you scale your revenue operations
-            </p>
+            <h1 class="text-7xl font-extrabold text-slate-900 tracking-tighter mb-4">Blue<span class="text-blue-600">Reach</span></h1>
+            <p class="text-xl text-slate-500 font-medium tracking-wide">Scale your revenue operations</p>
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl card-shadow w-full max-w-7xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[650px] mb-8">
+    <div class="flex-1 grid grid-cols-12 h-full overflow-hidden">
         
-        <div class="lg:col-span-8 p-8 flex flex-col border-r border-gray-100 relative">
+        <div class="col-span-12 lg:col-span-7 xl:col-span-8 bg-white border-r border-slate-200 flex flex-col h-full overflow-y-auto">
             
-            <div class="flex justify-between items-start mb-8 w-full">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+            <div class="px-10 py-8 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-20">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
                         <i class="fas fa-water text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold tracking-tight text-gray-900">Blue Reach</h1>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Lead Engine v1.2</p>
+                        <h1 class="text-xl font-bold tracking-tight text-slate-900">Blue Reach</h1>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">System Online</p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="relative">
                     {% if user.is_authenticated %}
-                        <div onclick="document.getElementById('userMenu').classList.toggle('hidden')" class="flex items-center gap-3 cursor-pointer group">
+                        <div onclick="document.getElementById('userMenu').classList.toggle('hidden')" class="flex items-center gap-3 cursor-pointer group hover:bg-slate-50 p-2 rounded-lg transition-all">
                             <div class="text-right hidden sm:block">
-                                <p class="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">My Account</p>
-                                <p class="text-[10px] text-gray-400 uppercase">{{ user.email.split('@')[0] }}</p>
+                                <p class="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">My Account</p>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-wide">{{ user.email.split('@')[0] }}</p>
                             </div>
-                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:border-blue-100 transition-all">
+                            <div class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm group-hover:border-blue-200 group-hover:scale-105 transition-all">
                                 <span class="text-sm font-bold text-blue-600">{{ user.email[0].upper() }}</span>
                             </div>
                         </div>
-                        <div id="userMenu" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden transform origin-top-right transition-all">
-                            <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                                <p class="text-xs text-gray-500 uppercase tracking-wider font-bold">Signed in as</p>
-                                <p class="text-sm font-bold text-gray-900 truncate">{{ user.email }}</p>
+                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden transform origin-top-right transition-all">
+                            <div class="px-4 py-3 border-b border-slate-50 bg-slate-50/50">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider font-bold">Signed in as</p>
+                                <p class="text-sm font-bold text-slate-900 truncate">{{ user.email }}</p>
                             </div>
-                            <a href="/subscription" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"><i class="fas fa-gem mr-2 text-purple-500"></i> Subscription</a>
-                            <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"><i class="fas fa-sliders-h mr-2 text-gray-400"></i> Settings</a>
-                            <div class="border-t border-gray-100 my-1"></div>
-                            <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-power-off mr-2"></i> Sign Out</a>
+                            <a href="/subscription" class="block px-4 py-2.5 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"><i class="fas fa-gem mr-2 text-purple-500"></i> Subscription</a>
+                            <a href="/settings" class="block px-4 py-2.5 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"><i class="fas fa-sliders-h mr-2 text-slate-400"></i> Settings</a>
+                            <div class="border-t border-slate-100 my-1"></div>
+                            <a href="/logout" class="block px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"><i class="fas fa-power-off mr-2"></i> Sign Out</a>
                         </div>
                     {% else %}
-                        <a href="/login" class="bg-gray-900 hover:bg-black text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-lg transition-all">
-                            Login Access <i class="fas fa-arrow-right ml-1"></i>
-                        </a>
+                        <div class="flex items-center gap-4">
+                            <span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-amber-200">Guest Mode</span>
+                            <a href="/login" class="bg-slate-900 hover:bg-black text-white text-xs font-bold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                                Login Access
+                            </a>
+                        </div>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="flex border-b border-gray-100 mb-8 gap-8">
-                <button id="tabMaps" onclick="setSource('maps')" class="tab-btn active pb-3 text-sm flex items-center gap-2"><i class="fas fa-map-marked-alt"></i> Google Maps</button>
-                <button id="tabSearch" onclick="setSource('search')" class="tab-btn pb-3 text-sm flex items-center gap-2"><i class="fab fa-linkedin"></i> LinkedIn People</button>
-            </div>
+            <div class="p-10 max-w-4xl mx-auto w-full flex-1">
+                <div class="flex border-b border-slate-200 mb-10 gap-8">
+                    <button id="tabMaps" onclick="setSource('maps')" class="tab-btn active pb-4 text-sm flex items-center gap-2.5"><i class="fas fa-map-marked-alt text-lg"></i> Google Maps</button>
+                    <button id="tabSearch" onclick="setSource('search')" class="tab-btn pb-4 text-sm flex items-center gap-2.5"><i class="fab fa-linkedin text-lg"></i> LinkedIn People</button>
+                </div>
 
-            <div id="inputsMaps" class="space-y-6 flex-1 transition-opacity duration-300">
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Industry</label>
-                    <div class="relative group">
-                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                        <input type="text" id="searchTerm" placeholder="e.g. Roofers, SaaS Startups, Cafes..." class="custom-input w-full pl-11 pr-4 py-3 rounded-xl text-sm font-medium">
+                <div id="inputsMaps" class="space-y-8 transition-opacity duration-300">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Target Industry</label>
+                        <div class="relative group">
+                            <i class="fas fa-search absolute left-4 top-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            <input type="text" id="searchTerm" placeholder="e.g. Roofers, SaaS Startups, Cafes..." class="custom-input w-full pl-11 pr-4 py-3.5 rounded-xl text-sm font-medium text-slate-700">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-6">
+                        <div class="col-span-6">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Limit Strategy</label>
+                            <div class="relative">
+                                <select id="limitMode" onchange="updateLimitLabel()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium appearance-none cursor-pointer text-slate-700">
+                                    <option value="leads">Total Leads</option>
+                                    <option value="credits">API Credits</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-4 top-4 text-slate-400 text-xs pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <div class="col-span-6">
+                            <label id="limitLabel" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Max Amount</label>
+                            <input type="number" id="limitValue" value="50" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-700">
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Target Markets</label>
+                        <div onclick="toggleCountryDropdown()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center text-slate-700 hover:border-blue-300">
+                            <span id="selectedCountriesText">-- Select Countries --</span>
+                            <i class="fas fa-globe text-slate-400"></i>
+                        </div>
+                        <div id="countryDropdownMenu" class="multi-select-dropdown shadow-xl border-slate-200">
+                            <div class="p-2 space-y-1 max-h-60 overflow-y-auto">
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="de" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇩🇪 Germany</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="us" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇺🇸 USA</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="uk" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇬🇧 UK</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="fr" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇫🇷 France</span></label>
+                                </div>
+                        </div>
+                    </div>
+
+                    <div id="stateSection" class="hidden relative animate-fade-in-down">
+                        <label class="block text-xs font-bold text-blue-600 uppercase tracking-wider mb-2.5">Target States (DE)</label>
+                        <div onclick="toggleMultiDropdown()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center border-blue-200 bg-blue-50/30 text-slate-700">
+                            <span id="selectedStatesText">-- All States --</span>
+                            <i class="fas fa-map text-blue-400"></i>
+                        </div>
+                        <div id="multiDropdownMenu" class="multi-select-dropdown shadow-xl border-blue-100">
+                            <div class="p-2 space-y-1">
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Berlin" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Berlin</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Bavaria" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Bavaria</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Enrichment & Filtering</label>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
+                                <span class="text-sm font-medium text-slate-700">Must have Website</span>
+                                <div class="relative inline-block w-11 h-6 align-middle select-none">
+                                    <input type="checkbox" id="skipNoWebsite" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300 ease-in-out"/>
+                                    <label for="skipNoWebsite" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300 ease-in-out"></label>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
+                                <span class="text-sm font-medium text-slate-700">Extract Emails</span>
+                                <div class="relative inline-block w-11 h-6 align-middle select-none">
+                                    <input type="checkbox" id="scrapeEmails" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300 ease-in-out"/>
+                                    <label for="scrapeEmails" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300 ease-in-out"></label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-12 gap-5">
-                    <div class="col-span-6"><label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Constraint</label><select id="limitMode" onchange="updateLimitLabel()" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium"><option value="leads">Total Leads</option><option value="credits">Credits</option></select></div>
-                    <div class="col-span-6"><label id="limitLabel" class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Max Amount</label><input type="number" id="limitValue" value="50" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium"></div>
-                </div>
-
-                <div class="relative">
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Markets</label>
-                    <div onclick="toggleCountryDropdown()" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center"><span id="selectedCountriesText">-- Select Countries --</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div>
-                    <div id="countryDropdownMenu" class="multi-select-dropdown"><div class="p-2 space-y-1">
-                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="de" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇩🇪 Germany</span></label>
-                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="us" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇺🇸 USA</span></label>
-                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="uk" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇬🇧 UK</span></label>
-                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="fr" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇫🇷 France</span></label>
-                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="es" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇪🇸 Spain</span></label>
-                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="it" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇮🇹 Italy</span></label>
-                    </div></div>
-                </div>
-
-                <div id="stateSection" class="hidden relative">
-                    <label class="block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2">Target States (DE)</label>
-                    <div onclick="toggleMultiDropdown()" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center border-blue-200 bg-blue-50/30"><span id="selectedStatesText">-- All States --</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div>
-                    <div id="multiDropdownMenu" class="multi-select-dropdown"><div class="p-2 space-y-1"><label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="state" value="Berlin" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedText()"><span class="ml-2 text-sm">Berlin</span></label><label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="state" value="Bavaria" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedText()"><span class="ml-2 text-sm">Bavaria</span></label></div></div>
-                </div>
-
-                <div class="border-t border-gray-100 pt-5">
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Enrichment & Filtering</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100"><span class="text-sm font-medium text-gray-700">Must have Website</span><div class="relative inline-block w-10 mr-2 align-middle select-none"><input type="checkbox" id="skipNoWebsite" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"/><label for="skipNoWebsite" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div>
-                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100"><span class="text-sm font-medium text-gray-700">Scrape Emails</span><div class="relative inline-block w-10 mr-2 align-middle select-none"><input type="checkbox" id="scrapeEmails" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"/><label for="scrapeEmails" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div>
+                <div id="inputsSearch" class="hidden space-y-8">
+                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center hover:bg-blue-50 hover:border-blue-300 transition-all relative group cursor-pointer">
+                        <input type="file" id="csvFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="uploadCSV()">
+                        <div id="uploadText" class="space-y-3">
+                            <div class="w-14 h-14 bg-slate-100 group-hover:bg-white rounded-full flex items-center justify-center mx-auto transition-all shadow-sm">
+                                <i class="fas fa-cloud-upload-alt text-2xl text-slate-400 group-hover:text-blue-500"></i>
+                            </div>
+                            <h3 class="text-base font-semibold text-slate-700">Upload Company List</h3>
+                            <p class="text-xs text-slate-400">Drag & drop CSV or Excel file</p>
+                        </div>
                     </div>
+                    <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Target Companies</label><textarea id="companyList" placeholder="Paste websites (one per line)..." class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-mono h-32 resize-none text-slate-700"></textarea></div>
+                    <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Job Titles</label><input type="text" id="roleList" value="CEO, Founder" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                    <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Limit</label><input type="number" id="linkedinLimit" value="100" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                </div>
+
+                <div class="mt-12 pt-6 border-t border-slate-100 flex items-center justify-between">
+                    <button onclick="document.getElementById('featureModal').classList.remove('hidden')" class="text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-2">
+                        <i class="far fa-lightbulb"></i> Request Source
+                    </button>
+                    <button id="runBtn" onclick="startScrape()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2.5">
+                        <i class="fas fa-rocket"></i> Launch Scraper
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <div id="inputsSearch" class="hidden space-y-6 flex-1">
-                <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-blue-50 hover:border-blue-200 transition-colors relative group">
-                    <input type="file" id="csvFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="uploadCSV()">
-                    <div id="uploadText" class="space-y-2">
-                        <div class="w-12 h-12 bg-gray-100 group-hover:bg-white rounded-full flex items-center justify-center mx-auto transition-colors"><i class="fas fa-cloud-upload-alt text-xl text-gray-400 group-hover:text-blue-500"></i></div>
-                        <p class="text-sm font-medium text-gray-600">Drop CSV or Excel list</p>
-                        <p class="text-xs text-gray-400">We auto-detect website columns</p>
-                    </div>
+        <div class="col-span-12 lg:col-span-5 xl:col-span-4 bg-[#0F172A] text-slate-300 flex flex-col h-full border-l border-slate-800 shadow-2xl relative z-10">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-[#0F172A]">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="text-xs font-mono font-bold tracking-widest text-slate-500 uppercase">Live Terminal</span>
                 </div>
-                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Target Companies</label><textarea id="companyList" placeholder="Paste websites (one per line)..." class="custom-input w-full px-4 py-3 rounded-xl text-sm font-mono h-32 resize-none"></textarea></div>
-                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Job Titles</label><input type="text" id="roleList" value="CEO, Founder" class="custom-input w-full px-4 py-3 rounded-xl text-sm"></div>
-                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Max Leads</label><input type="number" id="linkedinLimit" value="100" class="custom-input w-full px-4 py-3 rounded-xl text-sm"></div>
+                <div class="flex gap-3">
+                    <div id="creditsCounter" class="text-[10px] font-mono font-bold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded border border-purple-500/20 backdrop-blur-sm">0 CR</div>
+                    <div id="counter" class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20 backdrop-blur-sm">Ready</div>
+                </div>
+            </div>
+            
+            <div id="consoleOutput" class="flex-1 p-6 overflow-y-auto font-mono text-xs space-y-3 scroll-smooth">
+                <div class="opacity-50"><span class="text-blue-500">sys@bluereach:~$</span> system initialized...</div>
+                <div class="opacity-50"><span class="text-blue-500">sys@bluereach:~$</span> waiting for input...</div>
             </div>
 
-            <div class="mt-auto pt-6 flex justify-between items-center text-xs text-gray-400">
-                <button onclick="document.getElementById('featureModal').classList.remove('hidden')" class="hover:text-blue-600 transition-colors"><i class="fas fa-lightbulb mr-1"></i> Request Feature / Source</button>
-            </div>
-
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
-                    <i class="fas fa-rocket"></i> Launch Scraper
+            <div id="downloadContainer" class="p-6 border-t border-slate-800 bg-[#0F172A] hidden">
+                <button id="downloadBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 text-sm shadow-lg shadow-emerald-900/50 transition-all transform hover:-translate-y-0.5">
+                    <i class="fas fa-download"></i> Download Exported Data
                 </button>
             </div>
         </div>
-
-        <div class="lg:col-span-4 bg-gray-900 p-8 flex flex-col border-l border-gray-800">
-            <div class="flex justify-between items-center mb-6">
-                <div class="text-gray-500 text-[10px] font-mono uppercase tracking-widest">System Monitor</div>
-                <div class="flex gap-2">
-                    <div id="creditsCounter" class="text-[10px] font-mono font-bold text-purple-400 bg-purple-900/20 px-2 py-1 rounded border border-purple-800/50">0 CR</div>
-                    <div id="counter" class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-900/20 px-2 py-1 rounded border border-emerald-800/50">Ready</div>
-                </div>
-            </div>
-            <div id="consoleOutput" class="flex-1 logs-scroll overflow-y-auto font-mono text-[11px] space-y-2 pr-2 text-gray-400">
-                <div><span class="text-blue-500">sys@bluereach:~$</span> system initialized...</div>
-                <div><span class="text-blue-500">sys@bluereach:~$</span> waiting for input...</div>
-            </div>
-            <div id="downloadContainer" class="mt-6 pt-6 border-t border-gray-800 hidden"><button id="downloadBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 text-sm shadow-lg shadow-emerald-900/50"><i class="fas fa-download"></i> Download Data</button></div>
-        </div>
     </div>
 
-    <div id="featureModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-2">Request New Source</h3>
-            <p class="text-sm text-gray-500 mb-4">What other websites or methods should we scrape?</p>
-            <textarea id="featureText" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:border-blue-500 focus:outline-none mb-4" rows="4" placeholder="e.g. Scrape Instagram, YellowPages, or Trustpilot..."></textarea>
+    <div id="featureModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all scale-100">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-slate-900">Request Source</h3>
+                <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-sm text-slate-500 mb-6">What other data sources or websites should we integrate next?</p>
+            <textarea id="featureText" class="w-full border border-slate-200 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none mb-6 h-32 resize-none" placeholder="e.g. Scrape Instagram, YellowPages, or Trustpilot..."></textarea>
             <div class="flex justify-end gap-3">
-                <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">Cancel</button>
-                <button onclick="submitFeature()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Submit Request</button>
+                <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
+                <button onclick="submitFeature()" class="px-5 py-2.5 text-sm font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all">Submit Request</button>
             </div>
         </div>
     </div>
 
     <script>
-        let source = 'maps';
-        let matchType = 'rough';
-        let pollingInterval = null;
-
-        // Hide loader after animation
-        setTimeout(() => {
-            const loader = document.getElementById('loader');
-            if(loader) loader.style.display = 'none'; // Ensure removal after CSS fade
-        }, 3300); // 3.3 seconds (matches CSS + buffer)
-
+        let source = 'maps'; let matchType = 'rough'; let pollingInterval = null;
+        setTimeout(() => { const l=document.getElementById('loader'); if(l) l.style.display='none'; }, 3300);
         window.onload = function() {
             updateLimitLabel();
-            // Close menus logic...
+            // GUEST MODE LOGIC
+            if(!IS_LOGGED_IN) {
+                document.getElementById('runBtn').innerHTML = '<i class="fas fa-bolt"></i> Generate 10 Free Leads';
+                document.getElementById('limitValue').value = 10;
+                document.getElementById('limitValue').disabled = true;
+                document.getElementById('limitValue').classList.add('bg-slate-100', 'text-slate-400');
+            }
             document.addEventListener('click', function(e) {
                 if(!e.target.closest('#multiDropdownMenu') && !e.target.closest('#stateSection')) document.getElementById('multiDropdownMenu').classList.remove('open');
                 if(!e.target.closest('#countryDropdownMenu') && !e.target.closest('.relative')) document.getElementById('countryDropdownMenu').classList.remove('open');
-                if(!e.target.closest('#userMenu') && !e.target.closest('.relative')) {
-                    const m = document.getElementById('userMenu'); if(m) m.classList.add('hidden');
-                }
+                if(!e.target.closest('#userMenu') && !e.target.closest('.relative')) { const m=document.getElementById('userMenu'); if(m) m.classList.add('hidden'); }
             });
         };
-
         async function submitFeature() {
-            const text = document.getElementById('featureText').value;
-            if(!text) return;
-            try {
-                await fetch('/request-feature', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ feature_text: text }) });
-                alert("Thank you! Our engineering team has received your request.");
-                document.getElementById('featureModal').classList.add('hidden');
-                document.getElementById('featureText').value = "";
-            } catch(e) { alert("Error sending request."); }
+            const t = document.getElementById('featureText').value; if(!t) return;
+            try { await fetch('/request-feature', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({feature_text:t}) }); alert("Request Sent!"); document.getElementById('featureModal').classList.add('hidden'); } catch(e){}
         }
-
-        // ... (Keep your existing setSource, uploadCSV, toggle functions here) ...
         function setSource(src) {
             source = src;
-            const btnMaps=document.getElementById('tabMaps'), btnSearch=document.getElementById('tabSearch');
-            const inMaps=document.getElementById('inputsMaps'), inSearch=document.getElementById('inputsSearch');
-            if(src==='maps'){ btnMaps.classList.add('active'); btnSearch.classList.remove('active'); inMaps.classList.remove('hidden'); inSearch.classList.add('hidden'); }
-            else{ btnSearch.classList.add('active'); btnMaps.classList.remove('active'); inMaps.classList.add('hidden'); inSearch.classList.remove('hidden'); }
+            const bm=document.getElementById('tabMaps'), bs=document.getElementById('tabSearch');
+            const im=document.getElementById('inputsMaps'), is=document.getElementById('inputsSearch');
+            if(src==='maps'){ bm.classList.add('active'); bs.classList.remove('active'); im.classList.remove('hidden'); is.classList.add('hidden'); }
+            else{ bs.classList.add('active'); bm.classList.remove('active'); im.classList.add('hidden'); is.classList.remove('hidden'); }
         }
-
         async function uploadCSV() {
-            if(!IS_LOGGED_IN) { window.location.href = "/login"; return; }
-            const file = document.getElementById('csvFile').files[0]; if(!file) return;
-            const formData = new FormData(); formData.append('file', file);
-            document.getElementById('uploadText').innerHTML = `<i class="fas fa-spinner fa-spin text-blue-500"></i>`;
-            try {
-                const res = await fetch('/upload-csv', { method: 'POST', body: formData });
-                const data = await res.json();
-                if(data.status === 'success') {
-                    document.getElementById('companyList').value = data.domains.join('\n');
-                    document.getElementById('uploadText').innerHTML = `<i class="fas fa-check text-green-500"></i> ${data.count}`;
-                } else alert(data.error);
-            } catch(e) { alert("Upload failed"); }
+            if(!IS_LOGGED_IN) { window.location.href="/login"; return; }
+            const f=document.getElementById('csvFile').files[0]; if(!f) return;
+            const fd=new FormData(); fd.append('file',f);
+            document.getElementById('uploadText').innerHTML=`<i class="fas fa-spinner fa-spin text-blue-500"></i>`;
+            try { const r=await fetch('/upload-csv',{method:'POST',body:fd}); const d=await r.json(); 
+                if(d.status==='success'){ document.getElementById('companyList').value=d.domains.join('\n'); document.getElementById('uploadText').innerHTML=`<i class="fas fa-check text-green-500"></i> Done`; }
+            } catch(e){ alert("Upload failed"); }
         }
-
         function toggleCountryDropdown() { document.getElementById('countryDropdownMenu').classList.toggle('open'); }
         function updateSelectedCountries() {
-            const cbs = document.querySelectorAll('input[name="country"]:checked');
-            document.getElementById('selectedCountriesText').innerText = cbs.length===0 ? "-- Select --" : `${cbs.length} Selected`;
-            if(Array.from(cbs).map(c=>c.value).includes('de')) document.getElementById('stateSection').classList.remove('hidden');
-            else document.getElementById('stateSection').classList.add('hidden');
+            const c=document.querySelectorAll('input[name="country"]:checked');
+            document.getElementById('selectedCountriesText').innerText=c.length===0?"-- Select --":`${c.length} Selected`;
+            if(Array.from(c).map(x=>x.value).includes('de')) document.getElementById('stateSection').classList.remove('hidden'); else document.getElementById('stateSection').classList.add('hidden');
         }
-        function getSelectedCountries() { return Array.from(document.querySelectorAll('input[name="country"]:checked')).map(c=>c.value); }
-
+        function getSelectedCountries(){ return Array.from(document.querySelectorAll('input[name="country"]:checked')).map(x=>x.value); }
         function toggleMultiDropdown() { document.getElementById('multiDropdownMenu').classList.toggle('open'); }
-        function selectAllStates(s) { document.querySelectorAll('input[name="state"]').forEach(cb => cb.checked = s); updateSelectedText(); }
-        function updateSelectedText() {
-            const c = document.querySelectorAll('input[name="state"]:checked').length;
-            document.getElementById('selectedStatesText').innerText = c===0 ? "-- All States --" : `${c} Selected`;
-        }
-        function getSelectedStates() { return Array.from(document.querySelectorAll('input[name="state"]:checked')).map(c=>c.value); }
-
-        function updateLimitLabel() {
-            const mode = document.getElementById('limitMode').value;
-            document.getElementById('limitLabel').innerText = mode==='leads' ? "Target Leads" : "Max Credits";
-            document.getElementById('limitValue').placeholder = mode==='leads' ? "50" : "100";
-        }
-
-        function log(msg, type='system') {
-            const d = document.getElementById('consoleOutput');
-            const l = document.createElement('div');
-            l.innerHTML = type==='success' ? `<span class="text-emerald-500">➜</span> ${msg}` : `<span class="text-blue-500">sys@bluereach:~$</span> ${msg}`;
-            d.appendChild(l); d.scrollTop = d.scrollHeight;
-        }
-
+        function updateSelectedText() { const c=document.querySelectorAll('input[name="state"]:checked').length; document.getElementById('selectedStatesText').innerText=c===0?"-- All --":`${c} Selected`; }
+        function getSelectedStates(){ return Array.from(document.querySelectorAll('input[name="state"]:checked')).map(x=>x.value); }
+        function updateLimitLabel(){ const m=document.getElementById('limitMode').value; document.getElementById('limitLabel').innerText=m==='leads'?"Target Leads":"Max Credits"; document.getElementById('limitValue').placeholder=m==='leads'?"50":"100"; }
+        function log(m,t='s'){ const d=document.getElementById('consoleOutput'); const l=document.createElement('div'); l.className="transition-all duration-300 ease-out transform translate-y-2 opacity-0 animate-slide-in"; l.innerHTML=t==='success'?`<span class="text-emerald-400">➜</span> ${m}`:`<span class="text-blue-400">INFO:</span> ${m}`; d.appendChild(l); requestAnimationFrame(() => { l.classList.remove('translate-y-2', 'opacity-0'); }); d.scrollTop=d.scrollHeight; }
+        
         async function startScrape() {
-            if (!IS_LOGGED_IN) { window.location.href = "/login"; return; }
-            document.getElementById('consoleOutput').innerHTML = '';
+            document.getElementById('consoleOutput').innerHTML='';
             document.getElementById('downloadContainer').classList.add('hidden');
-            const btn = document.getElementById('runBtn');
-            btn.disabled = true; btn.classList.add('opacity-75'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
-
+            const btn=document.getElementById('runBtn'); btn.disabled=true; btn.classList.add('opacity-75'); btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Processing...';
             try {
-                if (source === 'maps') {
-                    const term = document.getElementById('searchTerm').value;
-                    const countries = getSelectedCountries();
-                    if(!term) throw new Error("Enter a keyword");
-                    if(countries.length === 0) throw new Error("Select a country");
-                    
-                    await fetch('/run-scrape', {
-                        method: 'POST', headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ 
-                            search_term: term, limit_value: document.getElementById('limitValue').value,
-                            limit_mode: document.getElementById('limitMode').value, match_type: matchType,
-                            region: countries, sub_region: getSelectedStates(),
-                            skip_no_website: document.getElementById('skipNoWebsite').checked,
-                            scrape_emails: document.getElementById('scrapeEmails').checked,
-                            min_rating: 0 
-                        })
-                    });
+                if(source==='maps'){
+                    const t=document.getElementById('searchTerm').value; const c=getSelectedCountries();
+                    if(!t) throw new Error("Enter keyword"); if(c.length===0) throw new Error("Select country");
+                    await fetch('/run-scrape',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+                        search_term:t, limit_value:document.getElementById('limitValue').value, limit_mode:document.getElementById('limitMode').value,
+                        match_type:'rough', region:c, sub_region:getSelectedStates(), skip_no_website:document.getElementById('skipNoWebsite').checked,
+                        scrape_emails:document.getElementById('scrapeEmails').checked, min_rating:0
+                    })});
                 } else {
-                    const companies = document.getElementById('companyList').value.split('\n').filter(x => x.trim());
-                    const roles = document.getElementById('roleList').value.split(',').filter(x => x.trim());
-                    if(companies.length === 0) throw new Error("No companies provided");
-                    await fetch('/run-linkedin-scrape', {
-                        method: 'POST', headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ companies, roles, limit: document.getElementById('linkedinLimit').value })
-                    });
+                    const c=document.getElementById('companyList').value.split('\n').filter(x=>x.trim());
+                    if(c.length===0) throw new Error("No companies");
+                    await fetch('/run-linkedin-scrape',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+                        companies:c, roles:document.getElementById('roleList').value.split(','), limit:document.getElementById('linkedinLimit').value
+                    })});
                 }
                 startPolling();
-            } catch(e) {
-                alert(e.message);
-                btn.disabled = false; btn.classList.remove('opacity-75'); btn.innerHTML = '<i class="fas fa-rocket"></i> Launch Scraper';
-            }
+            } catch(e){ alert(e.message); btn.disabled=false; btn.classList.remove('opacity-75'); btn.innerHTML='<i class="fas fa-rocket"></i> Launch Scraper'; }
         }
-
-        function startPolling() {
+        function startPolling(){
             if(pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(async () => {
-                const res = await fetch('/status');
-                const stat = await res.json();
-                document.getElementById('counter').innerText = `${stat.total_leads} LEADS`;
-                document.getElementById('creditsCounter').innerText = `${stat.api_calls} CR`;
-                document.getElementById('statusBadge').innerText = stat.is_running ? "Running..." : "Idle";
-                if(stat.new_logs.length) stat.new_logs.forEach(m => log(m, 'success'));
-                if(!stat.is_running) {
-                    clearInterval(pollingInterval);
-                    const btn = document.getElementById('runBtn');
-                    btn.disabled = false; btn.classList.remove('opacity-75'); btn.innerHTML = '<i class="fas fa-rocket"></i> Launch Scraper';
-                    if(stat.total_leads > 0) {
-                        document.getElementById('downloadContainer').classList.remove('hidden');
-                        document.getElementById('downloadBtn').onclick = () => window.location.href = `/download/${stat.current_filename}`;
-                    }
-                }
-            }, 2000);
+            pollingInterval=setInterval(async()=>{
+                const r=await fetch('/status'); const s=await r.json();
+                document.getElementById('counter').innerText=`${s.total_leads} LEADS`; document.getElementById('creditsCounter').innerText=`${s.api_calls} CR`;
+                if(s.new_logs.length) s.new_logs.forEach(m=>log(m,'success'));
+                if(!s.is_running){ clearInterval(pollingInterval); document.getElementById('runBtn').disabled=false; document.getElementById('runBtn').classList.remove('opacity-75'); document.getElementById('runBtn').innerHTML='<i class="fas fa-rocket"></i> Launch Scraper'; if(s.total_leads>0){ document.getElementById('downloadContainer').classList.remove('hidden'); document.getElementById('downloadBtn').onclick=()=>window.location.href=`/download/${s.current_filename}`; } }
+            },2000);
         }
     </script>
 </body>
