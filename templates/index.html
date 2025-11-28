@@ -3,138 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeadGen Master v1.1</title>
+    <title>Blue Reach Agency</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         body { background-color: #F3F4F6; font-family: 'Inter', sans-serif; color: #111827; }
+        
         .card-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
         .custom-input { background-color: #F9FAFB; border: 1px solid #E5E7EB; transition: all 0.2s; }
         .custom-input:focus { background-color: #fff; border-color: #2563EB; outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        /* Animations */
+        @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+        
+        .animate-wave { animation: wave 2s infinite ease-in-out; }
+        .loader-fade { animation: fadeOut 0.8s ease-out 2.5s forwards; } /* Starts fading at 2.5s */
+
+        /* UI Elements */
         .tab-btn { position: relative; color: #6B7280; font-weight: 500; transition: all 0.2s; cursor: pointer; }
         .tab-btn.active { color: #2563EB; }
         .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background-color: #2563EB; }
-        .precision-card { border: 1px solid #E5E7EB; transition: all 0.2s; }
-        .precision-card.selected { border-color: #2563EB; background-color: #EFF6FF; position: relative; }
+        
         .toggle-checkbox:checked { right: 0; border-color: #2563EB; }
         .toggle-checkbox:checked + .toggle-label { background-color: #2563EB; }
+        
         .multi-select-dropdown { max-height: 0; opacity: 0; transition: all 0.2s ease-in-out; overflow: hidden; position: absolute; z-index: 50; width: 100%; background: white; border: 1px solid #E5E7EB; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .multi-select-dropdown.open { max-height: 300px; opacity: 1; overflow-y: auto; margin-top: 0.5rem; }
+        
         .logs-scroll::-webkit-scrollbar { width: 6px; }
         .logs-scroll::-webkit-scrollbar-track { background: #111827; }
         .logs-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-10 px-6">
+<body class="min-h-screen flex flex-col items-center py-10 px-6 relative">
 
     <script>
         const IS_LOGGED_IN = {{ 'true' if user.is_authenticated else 'false' }};
     </script>
 
-    <div class="bg-white rounded-2xl card-shadow w-full max-w-6xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[600px] mb-8">
+    <div id="loader" class="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center loader-fade">
+        <div class="flex items-center gap-4 mb-4 animate-wave">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-300 transform rotate-3">
+                <i class="fas fa-water text-3xl text-white"></i>
+            </div>
+        </div>
+        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight animate-pulse">Blue Reach <span class="text-blue-600">Agency</span></h1>
+        <p class="text-sm text-gray-400 mt-2 font-medium tracking-widest uppercase">Initializing Core...</p>
+    </div>
+
+    <div class="bg-white rounded-2xl card-shadow w-full max-w-7xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[650px] mb-8">
         
-        <div class="lg:col-span-7 p-8 flex flex-col border-r border-gray-100">
+        <div class="lg:col-span-8 p-8 flex flex-col border-r border-gray-100 relative">
             
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex justify-between items-start mb-8 w-full">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
-                        <i class="fas fa-bolt text-lg"></i>
+                        <i class="fas fa-water text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold tracking-tight text-gray-900">LeadGen Master</h1>
-                        <p class="text-xs text-gray-400 font-medium uppercase">Professional Suite</p>
+                        <h1 class="text-xl font-bold tracking-tight text-gray-900">Blue Reach</h1>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Lead Engine v1.2</p>
                     </div>
                 </div>
 
                 <div class="relative">
                     {% if user.is_authenticated %}
-                        <div onclick="document.getElementById('userMenu').classList.toggle('hidden')" class="flex items-center gap-2 cursor-pointer bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200 transition-colors">
-                            <div class="w-6 h-6 bg-blue-500 rounded-full text-white flex items-center justify-center text-xs font-bold">
-                                {{ user.email[0].upper() }}
+                        <div onclick="document.getElementById('userMenu').classList.toggle('hidden')" class="flex items-center gap-3 cursor-pointer group">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">My Account</p>
+                                <p class="text-[10px] text-gray-400 uppercase">{{ user.email.split('@')[0] }}</p>
                             </div>
-                            <span class="text-xs font-bold text-gray-700">Account</span>
-                            <i class="fas fa-chevron-down text-[10px] text-gray-400"></i>
+                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:border-blue-100 transition-all">
+                                <span class="text-sm font-bold text-blue-600">{{ user.email[0].upper() }}</span>
+                            </div>
                         </div>
-                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                        <div id="userMenu" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden transform origin-top-right transition-all">
                             <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                                <p class="text-xs text-gray-500">Signed in as</p>
-                                <p class="text-sm font-bold text-gray-800 truncate">{{ user.email }}</p>
+                                <p class="text-xs text-gray-500 uppercase tracking-wider font-bold">Signed in as</p>
+                                <p class="text-sm font-bold text-gray-900 truncate">{{ user.email }}</p>
                             </div>
-                            <a href="/subscription" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"><i class="fas fa-credit-card mr-2 opacity-50"></i> My Subscription</a>
-                            <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"><i class="fas fa-cog mr-2 opacity-50"></i> Settings</a>
+                            <a href="/subscription" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"><i class="fas fa-gem mr-2 text-purple-500"></i> Subscription</a>
+                            <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"><i class="fas fa-sliders-h mr-2 text-gray-400"></i> Settings</a>
                             <div class="border-t border-gray-100 my-1"></div>
-                            <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt mr-2 opacity-50"></i> Sign Out</a>
+                            <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-power-off mr-2"></i> Sign Out</a>
                         </div>
                     {% else %}
-                        <a href="/login" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-md transition-all">
-                            Sign In
+                        <a href="/login" class="bg-gray-900 hover:bg-black text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-lg transition-all">
+                            Login Access <i class="fas fa-arrow-right ml-1"></i>
                         </a>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="flex border-b border-gray-100 mb-8 gap-6">
+            <div class="flex border-b border-gray-100 mb-8 gap-8">
                 <button id="tabMaps" onclick="setSource('maps')" class="tab-btn active pb-3 text-sm flex items-center gap-2"><i class="fas fa-map-marked-alt"></i> Google Maps</button>
-                <button id="tabSearch" onclick="setSource('search')" class="tab-btn pb-3 text-sm flex items-center gap-2"><i class="fab fa-linkedin"></i> LinkedIn Search</button>
+                <button id="tabSearch" onclick="setSource('search')" class="tab-btn pb-3 text-sm flex items-center gap-2"><i class="fab fa-linkedin"></i> LinkedIn People</button>
             </div>
 
             <div id="inputsMaps" class="space-y-6 flex-1 transition-opacity duration-300">
                 <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Niche / Keyword</label>
-                    <input type="text" id="searchTerm" placeholder="e.g. Marketing Agencies, Dentists..." class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium">
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Industry</label>
+                    <div class="relative group">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                        <input type="text" id="searchTerm" placeholder="e.g. Roofers, SaaS Startups, Cafes..." class="custom-input w-full pl-11 pr-4 py-3 rounded-xl text-sm font-medium">
+                    </div>
                 </div>
+
                 <div class="grid grid-cols-12 gap-5">
-                    <div class="col-span-6"><label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Limit By</label><select id="limitMode" onchange="updateLimitLabel()" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium"><option value="leads">Total Leads</option><option value="credits">Credits</option></select></div>
+                    <div class="col-span-6"><label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Constraint</label><select id="limitMode" onchange="updateLimitLabel()" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium"><option value="leads">Total Leads</option><option value="credits">Credits</option></select></div>
                     <div class="col-span-6"><label id="limitLabel" class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Max Amount</label><input type="number" id="limitValue" value="50" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium"></div>
                 </div>
+
                 <div class="relative">
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Countries</label>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Markets</label>
                     <div onclick="toggleCountryDropdown()" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center"><span id="selectedCountriesText">-- Select Countries --</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div>
                     <div id="countryDropdownMenu" class="multi-select-dropdown"><div class="p-2 space-y-1">
                         <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="de" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇩🇪 Germany</span></label>
                         <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="us" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇺🇸 USA</span></label>
                         <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="uk" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇬🇧 UK</span></label>
+                        <label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="country" value="fr" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇫🇷 France</span></label>
                     </div></div>
                 </div>
+
                 <div id="stateSection" class="hidden relative">
-                    <label class="block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2">Target States (DE Only)</label>
+                    <label class="block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2">Target States (DE)</label>
                     <div onclick="toggleMultiDropdown()" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center border-blue-200 bg-blue-50/30"><span id="selectedStatesText">-- All States --</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div>
                     <div id="multiDropdownMenu" class="multi-select-dropdown"><div class="p-2 space-y-1"><label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="state" value="Berlin" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedText()"><span class="ml-2 text-sm">Berlin</span></label><label class="checkbox-item flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="state" value="Bavaria" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedText()"><span class="ml-2 text-sm">Bavaria</span></label></div></div>
                 </div>
+
                 <div class="border-t border-gray-100 pt-5">
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Advanced Filters</label>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Enrichment & Filtering</label>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100"><span class="text-sm font-medium text-gray-700">Must have Website</span><div class="relative inline-block w-10 mr-2 align-middle select-none"><input type="checkbox" id="skipNoWebsite" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"/><label for="skipNoWebsite" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div>
-                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100"><span class="text-sm font-medium text-gray-700">Extract Emails</span><div class="relative inline-block w-10 mr-2 align-middle select-none"><input type="checkbox" id="scrapeEmails" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"/><label for="scrapeEmails" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div>
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100"><span class="text-sm font-medium text-gray-700">Scrape Emails</span><div class="relative inline-block w-10 mr-2 align-middle select-none"><input type="checkbox" id="scrapeEmails" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"/><label for="scrapeEmails" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div>
                     </div>
                 </div>
             </div>
 
             <div id="inputsSearch" class="hidden space-y-6 flex-1">
-                <div class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:bg-gray-50 relative"><input type="file" id="csvFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="uploadCSV()"><div id="uploadText"><i class="fas fa-cloud-upload-alt text-3xl text-gray-300 mb-2"></i><p class="text-sm font-medium text-gray-600">Drop CSV/Excel</p></div></div>
-                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Target Companies</label><textarea id="companyList" placeholder="example.com" class="custom-input w-full px-4 py-3 rounded-xl text-sm font-mono h-32 resize-none"></textarea></div>
-                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Roles</label><input type="text" id="roleList" value="CEO" class="custom-input w-full px-4 py-3 rounded-xl text-sm"></div>
-                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Limit</label><input type="number" id="linkedinLimit" value="100" class="custom-input w-full px-4 py-3 rounded-xl text-sm"></div>
+                <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-blue-50 hover:border-blue-200 transition-colors relative group">
+                    <input type="file" id="csvFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="uploadCSV()">
+                    <div id="uploadText" class="space-y-2">
+                        <div class="w-12 h-12 bg-gray-100 group-hover:bg-white rounded-full flex items-center justify-center mx-auto transition-colors"><i class="fas fa-cloud-upload-alt text-xl text-gray-400 group-hover:text-blue-500"></i></div>
+                        <p class="text-sm font-medium text-gray-600">Drop CSV or Excel list</p>
+                        <p class="text-xs text-gray-400">We auto-detect website columns</p>
+                    </div>
+                </div>
+                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Target Companies</label><textarea id="companyList" placeholder="Paste websites (one per line)..." class="custom-input w-full px-4 py-3 rounded-xl text-sm font-mono h-32 resize-none"></textarea></div>
+                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Job Titles</label><input type="text" id="roleList" value="CEO, Founder" class="custom-input w-full px-4 py-3 rounded-xl text-sm"></div>
+                <div><label class="block text-[11px] font-bold text-gray-400 mb-2">Max Leads</label><input type="number" id="linkedinLimit" value="100" class="custom-input w-full px-4 py-3 rounded-xl text-sm"></div>
             </div>
 
-            <div class="mt-8 pt-6 border-t border-gray-100">
-                <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                    <i class="fas fa-play text-xs"></i> Generate Leads
+            <div class="mt-auto pt-6 flex justify-between items-center text-xs text-gray-400">
+                <button onclick="document.getElementById('featureModal').classList.remove('hidden')" class="hover:text-blue-600 transition-colors"><i class="fas fa-lightbulb mr-1"></i> Request Feature / Source</button>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+                    <i class="fas fa-rocket"></i> Launch Scraper
                 </button>
             </div>
         </div>
 
-        <div class="lg:col-span-5 bg-gray-900 p-8 flex flex-col border-l border-gray-800">
+        <div class="lg:col-span-4 bg-gray-900 p-8 flex flex-col border-l border-gray-800">
             <div class="flex justify-between items-center mb-6">
-                <div class="text-gray-400 text-xs font-mono uppercase tracking-widest">Live Terminal</div>
+                <div class="text-gray-500 text-[10px] font-mono uppercase tracking-widest">System Monitor</div>
                 <div class="flex gap-2">
-                    <div id="creditsCounter" class="text-xs font-mono font-bold text-purple-400 bg-purple-900/30 px-2 py-1 rounded border border-purple-800">0 CR</div>
-                    <div id="counter" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-900/30 px-2 py-1 rounded border border-emerald-800">Ready</div>
+                    <div id="creditsCounter" class="text-[10px] font-mono font-bold text-purple-400 bg-purple-900/20 px-2 py-1 rounded border border-purple-800/50">0 CR</div>
+                    <div id="counter" class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-900/20 px-2 py-1 rounded border border-emerald-800/50">Ready</div>
                 </div>
             </div>
-            <div id="consoleOutput" class="flex-1 logs-scroll overflow-y-auto font-mono text-xs space-y-3 pr-2"><div class="text-gray-500">Waiting for command...</div></div>
-            <div id="downloadContainer" class="mt-6 pt-6 border-t border-gray-800 hidden"><button id="downloadBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2"><i class="fas fa-download"></i> Download CSV</button></div>
+            <div id="consoleOutput" class="flex-1 logs-scroll overflow-y-auto font-mono text-[11px] space-y-2 pr-2 text-gray-400">
+                <div><span class="text-blue-500">sys@bluereach:~$</span> system initialized...</div>
+                <div><span class="text-blue-500">sys@bluereach:~$</span> waiting for input...</div>
+            </div>
+            <div id="downloadContainer" class="mt-6 pt-6 border-t border-gray-800 hidden"><button id="downloadBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 text-sm shadow-lg shadow-emerald-900/50"><i class="fas fa-download"></i> Download Data</button></div>
+        </div>
+    </div>
+
+    <div id="featureModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Request New Source</h3>
+            <p class="text-sm text-gray-500 mb-4">What other websites or methods should we scrape?</p>
+            <textarea id="featureText" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:border-blue-500 focus:outline-none mb-4" rows="4" placeholder="e.g. Scrape Instagram, YellowPages, or Trustpilot..."></textarea>
+            <div class="flex justify-end gap-3">
+                <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">Cancel</button>
+                <button onclick="submitFeature()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Submit Request</button>
+            </div>
         </div>
     </div>
 
@@ -143,19 +206,36 @@
         let matchType = 'rough';
         let pollingInterval = null;
 
+        // Hide loader after animation
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if(loader) loader.style.display = 'none'; // Ensure removal after CSS fade
+        }, 3300); // 3.3 seconds (matches CSS + buffer)
+
         window.onload = function() {
             updateLimitLabel();
-            // Close menus on click outside
+            // Close menus logic...
             document.addEventListener('click', function(e) {
                 if(!e.target.closest('#multiDropdownMenu') && !e.target.closest('#stateSection')) document.getElementById('multiDropdownMenu').classList.remove('open');
                 if(!e.target.closest('#countryDropdownMenu') && !e.target.closest('.relative')) document.getElementById('countryDropdownMenu').classList.remove('open');
                 if(!e.target.closest('#userMenu') && !e.target.closest('.relative')) {
-                    const menu = document.getElementById('userMenu');
-                    if(menu) menu.classList.add('hidden');
+                    const m = document.getElementById('userMenu'); if(m) m.classList.add('hidden');
                 }
             });
         };
 
+        async function submitFeature() {
+            const text = document.getElementById('featureText').value;
+            if(!text) return;
+            try {
+                await fetch('/request-feature', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ feature_text: text }) });
+                alert("Thank you! Our engineering team has received your request.");
+                document.getElementById('featureModal').classList.add('hidden');
+                document.getElementById('featureText').value = "";
+            } catch(e) { alert("Error sending request."); }
+        }
+
+        // ... (Keep your existing setSource, uploadCSV, toggle functions here) ...
         function setSource(src) {
             source = src;
             const btnMaps=document.getElementById('tabMaps'), btnSearch=document.getElementById('tabSearch');
@@ -205,21 +285,16 @@
         function log(msg, type='system') {
             const d = document.getElementById('consoleOutput');
             const l = document.createElement('div');
-            l.innerHTML = type==='success' ? `<span class="text-emerald-500">➜</span> ${msg}` : `<span class="text-blue-500">INFO:</span> ${msg}`;
+            l.innerHTML = type==='success' ? `<span class="text-emerald-500">➜</span> ${msg}` : `<span class="text-blue-500">sys@bluereach:~$</span> ${msg}`;
             d.appendChild(l); d.scrollTop = d.scrollHeight;
         }
 
         async function startScrape() {
-            // LOGIN GATEKEEPER
-            if (!IS_LOGGED_IN) {
-                window.location.href = "/login";
-                return;
-            }
-
+            if (!IS_LOGGED_IN) { window.location.href = "/login"; return; }
             document.getElementById('consoleOutput').innerHTML = '';
             document.getElementById('downloadContainer').classList.add('hidden');
             const btn = document.getElementById('runBtn');
-            btn.disabled = true; btn.classList.add('opacity-75'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true; btn.classList.add('opacity-75'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
 
             try {
                 if (source === 'maps') {
@@ -236,7 +311,7 @@
                             region: countries, sub_region: getSelectedStates(),
                             skip_no_website: document.getElementById('skipNoWebsite').checked,
                             scrape_emails: document.getElementById('scrapeEmails').checked,
-                            min_rating: 0 // Optional: Add selector if needed
+                            min_rating: 0 
                         })
                     });
                 } else {
@@ -251,7 +326,7 @@
                 startPolling();
             } catch(e) {
                 alert(e.message);
-                btn.disabled = false; btn.classList.remove('opacity-75'); btn.innerHTML = 'Generate Leads';
+                btn.disabled = false; btn.classList.remove('opacity-75'); btn.innerHTML = '<i class="fas fa-rocket"></i> Launch Scraper';
             }
         }
 
@@ -267,7 +342,7 @@
                 if(!stat.is_running) {
                     clearInterval(pollingInterval);
                     const btn = document.getElementById('runBtn');
-                    btn.disabled = false; btn.classList.remove('opacity-75'); btn.innerHTML = 'Generate Leads';
+                    btn.disabled = false; btn.classList.remove('opacity-75'); btn.innerHTML = '<i class="fas fa-rocket"></i> Launch Scraper';
                     if(stat.total_leads > 0) {
                         document.getElementById('downloadContainer').classList.remove('hidden');
                         document.getElementById('downloadBtn').onclick = () => window.location.href = `/download/${stat.current_filename}`;
