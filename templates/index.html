@@ -10,7 +10,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { background-color: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; overflow: hidden; }
         
-        /* Modern Scrollbar */
+        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
@@ -22,8 +22,11 @@
         /* Animations */
         @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .animate-wave { animation: wave 3s infinite ease-in-out; }
         .loader-fade { animation: fadeOut 0.6s ease-out 2.5s forwards; }
+        .animate-row { animation: slideIn 0.3s ease-out forwards; }
 
         /* UI Components */
         .tab-btn { position: relative; color: #64748B; font-weight: 500; transition: all 0.2s; }
@@ -37,21 +40,11 @@
         .multi-select-dropdown { max-height: 0; opacity: 0; transition: all 0.2s ease-in-out; overflow: hidden; position: absolute; z-index: 50; width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .multi-select-dropdown.open { max-height: 300px; opacity: 1; overflow-y: auto; margin-top: 0.5rem; }
 
-        /* DRAG HANDLE STYLES */
-        #drag-handle {
-            width: 6px;
-            cursor: col-resize;
-            background-color: #E2E8F0;
-            transition: background-color 0.2s;
-            position: relative;
-            z-index: 50;
-        }
-        #drag-handle:hover, #drag-handle.dragging {
-            background-color: #3B82F6;
-        }
+        #drag-handle { width: 6px; cursor: col-resize; background-color: #F1F5F9; transition: background-color 0.2s; z-index: 50; }
+        #drag-handle:hover, #drag-handle.dragging { background-color: #3B82F6; }
     </style>
 </head>
-<body class="h-screen flex flex-col select-none"> <script>const IS_LOGGED_IN = {{ 'true' if user.is_authenticated else 'false' }};</script>
+<body class="h-screen flex flex-col select-none">
 
     <div id="loader" class="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center loader-fade">
         <div class="text-center animate-wave">
@@ -62,156 +55,74 @@
 
     <div class="flex-1 flex h-full overflow-hidden w-full" id="split-container">
         
-        <div id="left-panel" class="bg-white border-r border-slate-200 flex flex-col h-full overflow-y-auto" style="width: 65%; min-width: 350px;">
+        <div id="left-panel" class="bg-white border-r border-slate-200 flex flex-col h-full overflow-y-auto" style="width: 40%; min-width: 350px;">
             
-            <div class="px-10 py-8 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-20">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                        <i class="fas fa-water text-lg"></i>
+            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-20">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                        <i class="fas fa-water"></i>
                     </div>
-                    <div>
-                        <h1 class="text-xl font-bold tracking-tight text-slate-900">Blue Reach</h1>
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">System Online</p>
-                        </div>
-                    </div>
+                    <h1 class="text-lg font-bold text-slate-900">Blue Reach</h1>
                 </div>
-
-                <div class="relative">
-                    {% if user.is_authenticated %}
-                        <div onclick="document.getElementById('userMenu').classList.toggle('hidden')" class="flex items-center gap-3 cursor-pointer group hover:bg-slate-50 p-2 rounded-lg transition-all">
-                            <div class="text-right hidden sm:block">
-                                <p class="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">My Account</p>
-                                <p class="text-[10px] text-slate-400 uppercase tracking-wide">{{ user.email.split('@')[0] }}</p>
-                            </div>
-                            <div class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm group-hover:border-blue-200 group-hover:scale-105 transition-all">
-                                <span class="text-sm font-bold text-blue-600">{{ user.email[0].upper() }}</span>
-                            </div>
-                        </div>
-                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden transform origin-top-right transition-all">
-                            <div class="px-4 py-3 border-b border-slate-50 bg-slate-50/50">
-                                <p class="text-xs text-slate-500 uppercase tracking-wider font-bold">Signed in as</p>
-                                <p class="text-sm font-bold text-slate-900 truncate">{{ user.email }}</p>
-                            </div>
-                            <a href="/subscription" class="block px-4 py-2.5 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"><i class="fas fa-gem mr-2 text-purple-500"></i> Subscription</a>
-                            <a href="/settings" class="block px-4 py-2.5 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"><i class="fas fa-sliders-h mr-2 text-slate-400"></i> Settings</a>
-                            <div class="border-t border-slate-100 my-1"></div>
-                            <a href="/logout" class="block px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"><i class="fas fa-power-off mr-2"></i> Sign Out</a>
-                        </div>
-                    {% else %}
-                        <a href="/login" class="bg-slate-900 hover:bg-black text-white text-xs font-bold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
-                            Login Access
-                        </a>
-                    {% endif %}
+                
+                <div class="text-xs text-slate-400 font-medium uppercase tracking-widest">
+                    Admin Access
                 </div>
             </div>
 
-            <div class="p-10 max-w-4xl mx-auto w-full flex-1">
-                <div class="flex border-b border-slate-200 mb-10 gap-8">
-                    <button id="tabMaps" onclick="setSource('maps')" class="tab-btn active pb-4 text-sm flex items-center gap-2.5"><i class="fas fa-map-marked-alt text-lg"></i> Google Maps</button>
-                    <button id="tabSearch" onclick="setSource('search')" class="tab-btn pb-4 text-sm flex items-center gap-2.5"><i class="fab fa-linkedin text-lg"></i> LinkedIn People</button>
+            <div class="p-8 max-w-xl mx-auto w-full flex-1">
+                <div class="flex border-b border-slate-200 mb-8 gap-6">
+                    <button id="tabMaps" class="tab-btn active pb-3 text-sm flex items-center gap-2"><i class="fas fa-map-marker-alt"></i> Google Maps</button>
                 </div>
 
-                <div id="inputsMaps" class="space-y-8 transition-opacity duration-300">
+                <div id="inputsMaps" class="space-y-6 transition-opacity duration-300">
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Target Industry</label>
-                        <div class="relative group">
-                            <i class="fas fa-search absolute left-4 top-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
-                            <input type="text" id="searchTerm" placeholder="e.g. Roofers, SaaS Startups, Cafes..." class="custom-input w-full pl-11 pr-4 py-3.5 rounded-xl text-sm font-medium text-slate-700">
-                        </div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Industry</label>
+                        <input type="text" id="searchTerm" placeholder="e.g. Gyms, Dentists..." class="custom-input w-full px-4 py-3 rounded-xl text-sm">
                     </div>
 
-                    <div class="grid grid-cols-12 gap-6">
-                        <div class="col-span-6">
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Limit Strategy</label>
-                            <div class="relative">
-                                <select id="limitMode" onchange="updateLimitLabel()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium appearance-none cursor-pointer text-slate-700">
-                                    <option value="leads">Total Leads</option>
-                                    <option value="credits">API Credits</option>
-                                </select>
-                                <i class="fas fa-chevron-down absolute right-4 top-4 text-slate-400 text-xs pointer-events-none"></i>
-                            </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Limit</label>
+                            <select id="limitMode" onchange="updateLimitLabel()" class="custom-input w-full px-4 py-3 rounded-xl text-sm"><option value="leads">Leads</option><option value="credits">Credits</option></select>
                         </div>
-                        <div class="col-span-6">
-                            <label id="limitLabel" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Max Amount</label>
-                            <input type="number" id="limitValue" value="50" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-700">
+                        <div>
+                            <label id="limitLabel" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Amount</label>
+                            <input type="number" id="limitValue" value="50" class="custom-input w-full px-4 py-3 rounded-xl text-sm">
                         </div>
                     </div>
 
                     <div class="relative">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Target Markets</label>
-                        <div onclick="toggleCountryDropdown()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center text-slate-700 hover:border-blue-300">
-                            <span id="selectedCountriesText">-- Select Countries --</span>
-                            <i class="fas fa-globe text-slate-400"></i>
-                        </div>
-                        <div id="countryDropdownMenu" class="multi-select-dropdown shadow-xl border-slate-200">
-                            <div class="p-2 space-y-1 max-h-60 overflow-y-auto">
-                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="de" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇩🇪 Germany</span></label>
-                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="us" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇺🇸 USA</span></label>
-                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="uk" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇬🇧 UK</span></label>
-                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="fr" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇫🇷 France</span></label>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Countries</label>
+                        <div onclick="toggleCountryDropdown()" class="custom-input w-full px-4 py-3 rounded-xl text-sm cursor-pointer flex justify-between items-center"><span id="selectedCountriesText">-- Select --</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div>
+                        <div id="countryDropdownMenu" class="multi-select-dropdown shadow-lg border-slate-200">
+                            <div class="p-2 space-y-1 max-h-48 overflow-y-auto">
+                                <label class="checkbox-item flex items-center px-3 py-2 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" name="country" value="de" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇩🇪 Germany</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" name="country" value="us" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇺🇸 USA</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" name="country" value="uk" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇬🇧 UK</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" name="country" value="fr" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇫🇷 France</span></label>
                             </div>
                         </div>
                     </div>
-
-                    <div id="stateSection" class="hidden relative animate-fade-in-down">
-                        <label class="block text-xs font-bold text-blue-600 uppercase tracking-wider mb-2.5">Target States (DE)</label>
-                        <div onclick="toggleMultiDropdown()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center border-blue-200 bg-blue-50/30 text-slate-700">
-                            <span id="selectedStatesText">-- All States --</span>
-                            <i class="fas fa-map text-blue-400"></i>
-                        </div>
-                        <div id="multiDropdownMenu" class="multi-select-dropdown shadow-xl border-blue-100">
-                            <div class="p-2 space-y-1">
-                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Berlin" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Berlin</span></label>
-                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Bavaria" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Bavaria</span></label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Enrichment & Filtering</label>
-                        <div class="grid grid-cols-2 gap-6">
-                            <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
-                                <span class="text-sm font-medium text-slate-700">Must have Website</span>
-                                <div class="relative inline-block w-11 h-6 align-middle select-none">
-                                    <input type="checkbox" id="skipNoWebsite" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300 ease-in-out"/>
-                                    <label for="skipNoWebsite" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300 ease-in-out"></label>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
-                                <span class="text-sm font-medium text-slate-700">Extract Emails</span>
-                                <div class="relative inline-block w-11 h-6 align-middle select-none">
-                                    <input type="checkbox" id="scrapeEmails" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300 ease-in-out"/>
-                                    <label for="scrapeEmails" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300 ease-in-out"></label>
-                                </div>
-                            </div>
+                    
+                    <div id="stateSection" class="hidden relative">
+                        <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2">States (DE)</label>
+                        <div onclick="toggleMultiDropdown()" class="custom-input w-full px-4 py-3 rounded-xl text-sm cursor-pointer flex justify-between items-center border-blue-200 bg-blue-50/30 text-slate-700"><span id="selectedStatesText">-- All --</span><i class="fas fa-map text-blue-400"></i></div>
+                        <div id="multiDropdownMenu" class="multi-select-dropdown shadow-lg border-blue-100">
+                            <div class="p-2 space-y-1"><label class="checkbox-item flex items-center px-3 py-2 hover:bg-blue-50 rounded cursor-pointer"><input type="checkbox" name="state" value="Berlin" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedText()"><span class="ml-2 text-sm">Berlin</span></label></div>
                         </div>
                     </div>
                 </div>
 
-                <div id="inputsSearch" class="hidden space-y-8">
-                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center hover:bg-blue-50 hover:border-blue-300 transition-all relative group cursor-pointer">
-                        <input type="file" id="csvFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="uploadCSV()">
-                        <div id="uploadText" class="space-y-3">
-                            <div class="w-14 h-14 bg-slate-100 group-hover:bg-white rounded-full flex items-center justify-center mx-auto transition-all shadow-sm">
-                                <i class="fas fa-cloud-upload-alt text-2xl text-slate-400 group-hover:text-blue-500"></i>
-                            </div>
-                            <h3 class="text-base font-semibold text-slate-700">Upload Company List</h3>
-                            <p class="text-xs text-slate-400">Drag & drop CSV or Excel file</p>
-                        </div>
-                    </div>
-                    <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Target Companies</label><textarea id="companyList" placeholder="Paste websites (one per line)..." class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-mono h-32 resize-none text-slate-700"></textarea></div>
-                    <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Job Titles</label><input type="text" id="roleList" value="CEO, Founder" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-700"></div>
-                    <div><label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Limit</label><input type="number" id="linkedinLimit" value="100" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-700"></div>
-                </div>
-
-                <div class="mt-12 pt-6 border-t border-slate-100 flex items-center justify-between">
-                    <button onclick="document.getElementById('featureModal').classList.remove('hidden')" class="text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-2">
-                        <i class="far fa-lightbulb"></i> Request Source
+                <div class="mt-8 pt-6 border-t border-slate-100">
+                    <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-play"></i> Start Extraction
                     </button>
-                    <button id="runBtn" onclick="startScrape()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2.5">
-                        <i class="fas fa-rocket"></i> Launch Scraper
+                </div>
+
+                 <div class="text-center mt-4">
+                    <button onclick="document.getElementById('featureModal').classList.remove('hidden')" class="text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors">
+                        <i class="far fa-lightbulb mr-1"></i> Request Feature / Source
                     </button>
                 </div>
             </div>
@@ -219,27 +130,33 @@
 
         <div id="drag-handle"></div>
 
-        <div id="right-panel" class="bg-[#0F172A] text-slate-300 flex flex-col h-full border-l border-slate-800 shadow-2xl relative z-10" style="flex: 1; min-width: 350px;">
-            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-[#0F172A]">
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span class="text-xs font-mono font-bold tracking-widest text-slate-500 uppercase">Live Terminal</span>
+        <div id="right-panel" class="bg-slate-50 flex flex-col h-full relative z-10" style="flex: 1; min-width: 400px;">
+            
+            <div class="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Live Results</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Real-time data feed</p>
                 </div>
                 <div class="flex gap-3">
-                    <div id="creditsCounter" class="text-[10px] font-mono font-bold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded border border-purple-500/20 backdrop-blur-sm">0 CR</div>
-                    <div id="counter" class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20 backdrop-blur-sm">Ready</div>
+                    <div id="counter" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">0 Leads</div>
+                    <button id="downloadBtn" class="hidden bg-slate-900 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow hover:bg-black transition-all"><i class="fas fa-download mr-2"></i> Export CSV</button>
                 </div>
             </div>
             
-            <div id="consoleOutput" class="flex-1 p-6 overflow-y-auto font-mono text-xs space-y-3 scroll-smooth">
-                <div class="opacity-50"><span class="text-blue-500">sys@bluereach:~$</span> system initialized...</div>
-                <div class="opacity-50"><span class="text-blue-500">sys@bluereach:~$</span> waiting for input...</div>
+            <div class="bg-slate-100 border-b border-slate-200 px-6 py-2 grid grid-cols-12 gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <div class="col-span-4">Business Name</div>
+                <div class="col-span-3">Location</div>
+                <div class="col-span-3">Website / Email</div>
+                <div class="col-span-2 text-right">Status</div>
             </div>
 
-            <div id="downloadContainer" class="p-6 border-t border-slate-800 bg-[#0F172A] hidden">
-                <button id="downloadBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 text-sm shadow-lg shadow-emerald-900/50 transition-all transform hover:-translate-y-0.5">
-                    <i class="fas fa-download"></i> Download Exported Data
-                </button>
+            <div class="flex-1 overflow-y-auto p-0 bg-slate-50/50">
+                <div id="resultsTable" class="divide-y divide-slate-100">
+                    <div class="px-6 py-10 text-center text-slate-400 text-sm" id="emptyState">
+                        <i class="fas fa-inbox text-3xl mb-3 opacity-20"></i>
+                        <p>Waiting for scrape to start...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -250,8 +167,7 @@
                 <h3 class="text-xl font-bold text-slate-900">Request Source</h3>
                 <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
             </div>
-            <p class="text-sm text-slate-500 mb-6">What other data sources or websites should we integrate next?</p>
-            <textarea id="featureText" class="w-full border border-slate-200 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none mb-6 h-32 resize-none" placeholder="e.g. Scrape Instagram, YellowPages, or Trustpilot..."></textarea>
+            <textarea id="featureText" class="w-full border border-slate-200 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none mb-6 h-32 resize-none" placeholder="e.g. Scrape Instagram..."></textarea>
             <div class="flex justify-end gap-3">
                 <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
                 <button onclick="submitFeature()" class="px-5 py-2.5 text-sm font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all">Submit Request</button>
@@ -265,62 +181,25 @@
         const leftPanel = document.getElementById('left-panel');
         const container = document.getElementById('split-container');
         let isDragging = false;
+        handle.addEventListener('mousedown', () => { isDragging = true; document.body.style.cursor = 'col-resize'; });
+        document.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = 'default'; });
+        document.addEventListener('mousemove', (e) => { if (isDragging) { 
+            const newWidth = ((e.clientX - container.getBoundingClientRect().left) / container.getBoundingClientRect().width) * 100;
+            if (newWidth > 20 && newWidth < 80) leftPanel.style.width = `${newWidth}%`;
+        }});
 
-        handle.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            handle.classList.add('dragging');
-            document.body.style.cursor = 'col-resize';
-        });
-
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            handle.classList.remove('dragging');
-            document.body.style.cursor = 'default';
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const containerRect = container.getBoundingClientRect();
-            // Calculate percentage width based on mouse position
-            const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-            
-            // Set limits (min 20%, max 80%)
-            if (newWidth > 20 && newWidth < 80) {
-                leftPanel.style.width = `${newWidth}%`;
-            }
-        });
-
-        // EXISTING LOGIC
-        let source = 'maps'; let matchType = 'rough'; let pollingInterval = null;
+        // APP LOGIC
+        let source = 'maps'; let pollingInterval = null;
         setTimeout(() => { const l=document.getElementById('loader'); if(l) l.style.display='none'; }, 3300);
+
         window.onload = function() {
             updateLimitLabel();
             document.addEventListener('click', function(e) {
                 if(!e.target.closest('#multiDropdownMenu') && !e.target.closest('#stateSection')) document.getElementById('multiDropdownMenu').classList.remove('open');
                 if(!e.target.closest('#countryDropdownMenu') && !e.target.closest('.relative')) document.getElementById('countryDropdownMenu').classList.remove('open');
-                if(!e.target.closest('#userMenu') && !e.target.closest('.relative')) { const m=document.getElementById('userMenu'); if(m) m.classList.add('hidden'); }
             });
         };
-        async function submitFeature() {
-            const t = document.getElementById('featureText').value; if(!t) return;
-            try { await fetch('/request-feature', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({feature_text:t}) }); alert("Request Sent!"); document.getElementById('featureModal').classList.add('hidden'); } catch(e){}
-        }
-        function setSource(src) {
-            source = src;
-            const bm=document.getElementById('tabMaps'), bs=document.getElementById('tabSearch');
-            const im=document.getElementById('inputsMaps'), is=document.getElementById('inputsSearch');
-            if(src==='maps'){ bm.classList.add('active'); bs.classList.remove('active'); im.classList.remove('hidden'); is.classList.add('hidden'); }
-            else{ bs.classList.add('active'); bm.classList.remove('active'); im.classList.add('hidden'); is.classList.remove('hidden'); }
-        }
-        async function uploadCSV() {
-            if(!IS_LOGGED_IN) { window.location.href="/login"; return; }
-            const f=document.getElementById('csvFile').files[0]; if(!f) return;
-            const fd=new FormData(); fd.append('file',f);
-            document.getElementById('uploadText').innerHTML=`<i class="fas fa-spinner fa-spin text-blue-500"></i>`;
-            try { const r=await fetch('/upload-csv',{method:'POST',body:fd}); const d=await r.json(); 
-                if(d.status==='success'){ document.getElementById('companyList').value=d.domains.join('\n'); document.getElementById('uploadText').innerHTML=`<i class="fas fa-check text-green-500"></i> Done`; }
-            } catch(e){ alert("Upload failed"); }
-        }
+
         function toggleCountryDropdown() { document.getElementById('countryDropdownMenu').classList.toggle('open'); }
         function updateSelectedCountries() {
             const c=document.querySelectorAll('input[name="country"]:checked');
@@ -332,39 +211,72 @@
         function updateSelectedText() { const c=document.querySelectorAll('input[name="state"]:checked').length; document.getElementById('selectedStatesText').innerText=c===0?"-- All --":`${c} Selected`; }
         function getSelectedStates(){ return Array.from(document.querySelectorAll('input[name="state"]:checked')).map(x=>x.value); }
         function updateLimitLabel(){ const m=document.getElementById('limitMode').value; document.getElementById('limitLabel').innerText=m==='leads'?"Target Leads":"Max Credits"; document.getElementById('limitValue').placeholder=m==='leads'?"50":"100"; }
-        function log(m,t='s'){ const d=document.getElementById('consoleOutput'); const l=document.createElement('div'); l.className="transition-all duration-300 ease-out transform translate-y-2 opacity-0 animate-slide-in"; l.innerHTML=t==='success'?`<span class="text-emerald-400">➜</span> ${m}`:`<span class="text-blue-400">INFO:</span> ${m}`; d.appendChild(l); requestAnimationFrame(() => { l.classList.remove('translate-y-2', 'opacity-0'); }); d.scrollTop=d.scrollHeight; }
-        
+
+        async function submitFeature() {
+            const t = document.getElementById('featureText').value; if(!t) return;
+            try { await fetch('/request-feature', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({feature_text:t}) }); alert("Request Sent!"); document.getElementById('featureModal').classList.add('hidden'); } catch(e){}
+        }
+
+        // --- TABLE ROW INJECTOR ---
+        function addTableRow(logText) {
+            document.getElementById('emptyState').style.display = 'none';
+            const table = document.getElementById('resultsTable');
+            
+            // Handle Email vs Regular logs
+            let title = logText.replace("+ ", "").replace("Found ", "").replace("📧 Found Email: ", "");
+            let status = logText.includes("Email") ? "EMAIL FOUND" : "FOUND";
+            let statusColor = logText.includes("Email") ? "bg-purple-100 text-purple-700" : "bg-emerald-100 text-emerald-700";
+            
+            const row = document.createElement('div');
+            row.className = "px-6 py-3 border-b border-slate-100 bg-white hover:bg-slate-50 transition-colors grid grid-cols-12 gap-4 items-center animate-row";
+            row.innerHTML = `
+                <div class="col-span-4 font-medium text-sm text-slate-700 truncate" title="${title}">${title}</div>
+                <div class="col-span-3 text-xs text-slate-500 truncate"><i class="fas fa-map-marker-alt mr-1 text-slate-300"></i> Unknown</div>
+                <div class="col-span-3 text-xs text-blue-500 truncate">Checking...</div>
+                <div class="col-span-2 text-right"><span class="${statusColor} text-[10px] font-bold px-2 py-0.5 rounded">${status}</span></div>
+            `;
+            table.insertBefore(row, table.firstChild);
+        }
+
         async function startScrape() {
-            if(!IS_LOGGED_IN) { window.location.href="/login"; return; }
-            document.getElementById('consoleOutput').innerHTML='';
-            document.getElementById('downloadContainer').classList.add('hidden');
+            document.getElementById('resultsTable').innerHTML = '<div class="px-6 py-10 text-center text-slate-400 text-sm" id="emptyState"><i class="fas fa-sync fa-spin text-3xl mb-3 opacity-20"></i><p>Initializing Scraper...</p></div>';
+            document.getElementById('downloadBtn').classList.add('hidden');
+            
             const btn=document.getElementById('runBtn'); btn.disabled=true; btn.classList.add('opacity-75'); btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
             try {
-                if(source==='maps'){
-                    const t=document.getElementById('searchTerm').value; const c=getSelectedCountries();
-                    if(!t) throw new Error("Enter keyword"); if(c.length===0) throw new Error("Select country");
-                    await fetch('/run-scrape',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-                        search_term:t, limit_value:document.getElementById('limitValue').value, limit_mode:document.getElementById('limitMode').value,
-                        match_type:'rough', region:c, sub_region:getSelectedStates(), skip_no_website:document.getElementById('skipNoWebsite').checked,
-                        scrape_emails:document.getElementById('scrapeEmails').checked, min_rating:0
-                    })});
-                } else {
-                    const c=document.getElementById('companyList').value.split('\n').filter(x=>x.trim());
-                    if(c.length===0) throw new Error("No companies");
-                    await fetch('/run-linkedin-scrape',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-                        companies:c, roles:document.getElementById('roleList').value.split(','), limit:document.getElementById('linkedinLimit').value
-                    })});
-                }
+                const t=document.getElementById('searchTerm').value; const c=getSelectedCountries();
+                if(!t) throw new Error("Enter keyword"); if(c.length===0) throw new Error("Select country");
+                
+                await fetch('/run-scrape',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+                    search_term:t, limit_value:document.getElementById('limitValue').value, limit_mode:document.getElementById('limitMode').value,
+                    match_type:'rough', region:c, sub_region:getSelectedStates(), skip_no_website:false,
+                    scrape_emails:false, min_rating:0
+                })});
                 startPolling();
             } catch(e){ alert(e.message); btn.disabled=false; btn.classList.remove('opacity-75'); btn.innerHTML='<i class="fas fa-rocket"></i> Launch Scraper'; }
         }
+
         function startPolling(){
             if(pollingInterval) clearInterval(pollingInterval);
             pollingInterval=setInterval(async()=>{
                 const r=await fetch('/status'); const s=await r.json();
-                document.getElementById('counter').innerText=`${s.total_leads} LEADS`; document.getElementById('creditsCounter').innerText=`${s.api_calls} CR`;
-                if(s.new_logs.length) s.new_logs.forEach(m=>log(m,'success'));
-                if(!s.is_running){ clearInterval(pollingInterval); document.getElementById('runBtn').disabled=false; document.getElementById('runBtn').classList.remove('opacity-75'); document.getElementById('runBtn').innerHTML='<i class="fas fa-rocket"></i> Launch Scraper'; if(s.total_leads>0){ document.getElementById('downloadContainer').classList.remove('hidden'); document.getElementById('downloadBtn').onclick=()=>window.location.href=`/download/${s.current_filename}`; } }
+                document.getElementById('counter').innerText=`${s.total_leads} LEADS`;
+                
+                // Inject new rows
+                if(s.new_logs.length) s.new_logs.forEach(m => addTableRow(m));
+
+                if(!s.is_running){ 
+                    clearInterval(pollingInterval); 
+                    document.getElementById('runBtn').disabled=false; 
+                    document.getElementById('runBtn').classList.remove('opacity-75'); 
+                    document.getElementById('runBtn').innerHTML='<i class="fas fa-rocket"></i> Launch Scraper'; 
+                    if(s.total_leads>0){ 
+                        const dlBtn = document.getElementById('downloadBtn');
+                        dlBtn.classList.remove('hidden'); 
+                        dlBtn.onclick=()=>window.location.href=`/download/${s.current_filename}`; 
+                    } 
+                }
             },2000);
         }
     </script>
