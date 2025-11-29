@@ -22,11 +22,10 @@
         /* Animations */
         @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .animate-wave { animation: wave 3s infinite ease-in-out; }
         .loader-fade { animation: fadeOut 0.6s ease-out 2.5s forwards; }
         .animate-row { animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* UI Components */
         .tab-btn { position: relative; color: #64748B; font-weight: 500; transition: all 0.2s; }
@@ -64,7 +63,6 @@
                     </div>
                     <h1 class="text-lg font-bold text-slate-900">Blue Reach</h1>
                 </div>
-                
                 <div class="text-xs text-slate-400 font-medium uppercase tracking-widest">
                     Admin Console
                 </div>
@@ -98,7 +96,7 @@
                                 <label id="limitLabel" class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Max Amount</label>
                                 <div class="flex items-center gap-2">
                                     <input type="checkbox" id="unlimitedCheck" onchange="toggleUnlimited()" class="w-3 h-3 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
-                                    <label for="unlimitedCheck" class="text-[10px] font-bold text-blue-600 uppercase cursor-pointer select-none">As much as possible</label>
+                                    <label for="unlimitedCheck" class="text-[10px] font-bold text-blue-600 uppercase cursor-pointer select-none">Unlimited</label>
                                 </div>
                             </div>
                             <input type="number" id="limitValue" value="50" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-700 transition-all">
@@ -161,10 +159,17 @@
                 </div>
 
                 <div class="mt-12 pt-6 border-t border-slate-100 flex items-center justify-between">
+                    <button onclick="openHistory()" class="text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-2">
+                        <i class="fas fa-history"></i> Past Searches
+                    </button>
+                    
                     <button onclick="document.getElementById('featureModal').classList.remove('hidden')" class="text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-2">
                         <i class="far fa-lightbulb"></i> Request Source
                     </button>
-                    <button id="runBtn" onclick="startScrape()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2.5">
+                </div>
+                
+                <div class="mt-4">
+                    <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2.5">
                         <i class="fas fa-rocket"></i> Launch Scraper
                     </button>
                 </div>
@@ -210,10 +215,36 @@
                 <h3 class="text-xl font-bold text-slate-900">Request Source</h3>
                 <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
             </div>
-            <textarea id="featureText" class="w-full border border-slate-200 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none mb-6 h-32 resize-none" placeholder="e.g. Scrape Instagram, YellowPages, or Trustpilot..."></textarea>
+            <textarea id="featureText" class="w-full border border-slate-200 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none mb-6 h-32 resize-none" placeholder="e.g. Scrape Instagram..."></textarea>
             <div class="flex justify-end gap-3">
                 <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
                 <button onclick="submitFeature()" class="px-5 py-2.5 text-sm font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 transform transition-all scale-100 flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900">Search History</h3>
+                    <p class="text-sm text-slate-500">Download your past extractions</p>
+                </div>
+                <button onclick="document.getElementById('historyModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="overflow-y-auto flex-1 pr-2">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-xs font-bold text-slate-400 uppercase border-b border-slate-100">
+                            <th class="py-3">Date</th>
+                            <th class="py-3">Search Term</th>
+                            <th class="py-3">Leads</th>
+                            <th class="py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="text-sm text-slate-600">
+                        </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -248,6 +279,41 @@
             try { await fetch('/request-feature', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({feature_text:t}) }); alert("Request Sent!"); document.getElementById('featureModal').classList.add('hidden'); } catch(e){}
         }
 
+        // FIXED HISTORY LOADER
+        async function openHistory() {
+            document.getElementById('historyModal').classList.remove('hidden');
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4"><i class="fas fa-spinner fa-spin text-blue-500"></i> Loading...</td></tr>';
+            
+            try {
+                const res = await fetch('/history');
+                if (!res.ok) throw new Error("History failed");
+                const data = await res.json();
+                
+                tbody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">No history found</td></tr>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = "border-b border-slate-50 hover:bg-slate-50 transition-colors";
+                    row.innerHTML = `
+                        <td class="py-3 text-slate-500">${item.date || '-'}</td>
+                        <td class="py-3 font-medium text-slate-800">${item.term || 'Unknown'}</td>
+                        <td class="py-3"><span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded">${item.leads_found || 0}</span></td>
+                        <td class="py-3 text-right">
+                            <a href="/download/${item.filename}" class="text-blue-600 hover:underline text-xs font-bold"><i class="fas fa-download mr-1"></i> CSV</a>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">No history yet.</td></tr>';
+            }
+        }
+
         function toggleUnlimited() {
             const chk = document.getElementById('unlimitedCheck');
             const inp = document.getElementById('limitValue');
@@ -271,23 +337,17 @@
             if(Array.from(c).map(x=>x.value).includes('de')) document.getElementById('stateSection').classList.remove('hidden'); else document.getElementById('stateSection').classList.add('hidden');
         }
         function getSelectedCountries(){ return Array.from(document.querySelectorAll('input[name="country"]:checked')).map(x=>x.value); }
-
         function toggleMultiDropdown() { document.getElementById('multiDropdownMenu').classList.toggle('open'); }
         function updateSelectedText() { const c=document.querySelectorAll('input[name="state"]:checked').length; document.getElementById('selectedStatesText').innerText=c===0?"-- All --":`${c} Selected`; }
         function getSelectedStates(){ return Array.from(document.querySelectorAll('input[name="state"]:checked')).map(x=>x.value); }
-        
         function updateLimitLabel(){ const m=document.getElementById('limitMode').value; document.getElementById('limitLabel').innerText=m==='leads'?"Target Leads":"Max Credits"; document.getElementById('limitValue').placeholder=m==='leads'?"50":"100"; }
 
-        // --- TABLE ROW INJECTOR ---
         function addTableRow(logText) {
             document.getElementById('emptyState').style.display = 'none';
             const table = document.getElementById('resultsTable');
-            
-            // Parse log text "Found: Title" -> Title
             let title = logText.replace("+ ", "").replace("Found ", "").replace("📧 Found Email: ", "");
             let status = logText.includes("Email") ? "EMAIL FOUND" : "FOUND";
             let statusColor = logText.includes("Email") ? "bg-purple-100 text-purple-700" : "bg-emerald-100 text-emerald-700";
-            
             const row = document.createElement('div');
             row.className = "px-6 py-3 border-b border-slate-100 bg-white hover:bg-slate-50 transition-colors grid grid-cols-12 gap-4 items-center animate-row";
             row.innerHTML = `
@@ -302,14 +362,11 @@
         async function startScrape() {
             document.getElementById('resultsTable').innerHTML = '<div class="px-6 py-10 text-center text-slate-400 text-sm" id="emptyState"><i class="fas fa-sync fa-spin text-3xl mb-3 opacity-20"></i><p>Initializing Scraper...</p></div>';
             document.getElementById('downloadBtn').classList.add('hidden');
-            
             const btn=document.getElementById('runBtn'); btn.disabled=true; btn.classList.add('opacity-75'); btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Processing...';
-            
             try {
                 const t=document.getElementById('searchTerm').value; const c=getSelectedCountries();
                 if(!t) throw new Error("Enter keyword"); if(c.length===0) throw new Error("Select country");
                 
-                // CHECK UNLIMITED
                 const limitVal = document.getElementById('unlimitedCheck').checked ? 1000000 : document.getElementById('limitValue').value;
 
                 await fetch('/run-scrape',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
@@ -326,10 +383,7 @@
             pollingInterval=setInterval(async()=>{
                 const r=await fetch('/status'); const s=await r.json();
                 document.getElementById('counter').innerText=`${s.total_leads} LEADS`;
-                
-                // Inject new rows
                 if(s.new_logs.length) s.new_logs.forEach(m => addTableRow(m));
-
                 if(!s.is_running){ 
                     clearInterval(pollingInterval); 
                     document.getElementById('runBtn').disabled=false; 

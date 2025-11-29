@@ -31,20 +31,11 @@ for folder in [DATA_DIR, UPLOAD_FOLDER]:
 HISTORY_FILE = os.path.join(BASE_DIR, "search_history.json")
 
 REGION_FILES = {
-    'de': 'data/cities.txt',      # Germany (Default)
-    'us': 'data/cities_us.txt',   # USA
-    'uk': 'data/cities_uk.txt',   # UK
-    'fr': 'data/cities_fr.txt',   # France
-    'es': 'data/cities_es.txt',   # Spain
-    'it': 'data/cities_it.txt',   # Italy
-    'au': 'data/cities_au.txt',   # Australia
-    'br': 'data/cities_br.txt',   # Brazil
-    'ca': 'data/cities_ca.txt',   # Canada
-    'ch': 'data/cities_ch.txt',   # Switzerland
-    'cn': 'data/cities_cn.txt',   # China
-    'in': 'data/cities_in.txt',   # India
-    'jp': 'data/cities_jp.txt',   # Japan
-    'ru': 'data/cities_ru.txt'    # Russia
+    'de': 'data/cities.txt', 'us': 'data/cities_us.txt', 'uk': 'data/cities_uk.txt',
+    'fr': 'data/cities_fr.txt', 'es': 'data/cities_es.txt', 'it': 'data/cities_it.txt',
+    'au': 'data/cities_au.txt', 'ch': 'data/cities_ch.txt',
+    'br': 'data/cities_br.txt', 'ca': 'data/cities_ca.txt', 'cn': 'data/cities_cn.txt',
+    'in': 'data/cities_in.txt', 'jp': 'data/cities_jp.txt', 'ru': 'data/cities_ru.txt'
 }
 
 job_status = {"is_running": False, "current_city": "", "total_leads": 0, "api_calls": 0, "new_logs": [], "current_filename": ""}
@@ -72,15 +63,38 @@ def clean_filename(s):
     return re.sub(r'[\\/*?:"<>|]', "", s).replace(" ", "_")
 
 def save_to_history(term, region, leads, filename):
-    reg = region if isinstance(region, str) else ", ".join(region).upper()
-    entry = {"timestamp": time.time(), "date": datetime.now().strftime("%Y-%m-%d %H:%M"), "term": term, "region": reg, "leads_found": leads, "filename": filename}
-    hist = []
-    if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE,'r') as f: 
-            try: hist = json.load(f)
-            except: pass
-    hist.insert(0, entry)
-    with open(HISTORY_FILE,'w') as f: json.dump(hist, f, indent=4)
+    try:
+        reg = region if isinstance(region, str) else ", ".join(region).upper()
+        entry = {
+            "timestamp": time.time(),
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "term": term,
+            "region": reg,
+            "leads_found": leads,
+            "filename": filename
+        }
+        
+        hist = []
+        if os.path.exists(HISTORY_FILE):
+            try:
+                with open(HISTORY_FILE, 'r') as f:
+                    hist = json.load(f)
+            except: hist = []
+
+        # Check if this filename already exists (update count instead of duplicate)
+        found = False
+        for existing in hist:
+            if existing['filename'] == filename:
+                existing['leads_found'] = leads
+                found = True
+                break
+        
+        if not found:
+            hist.insert(0, entry)
+
+        with open(HISTORY_FILE, 'w') as f: json.dump(hist, f, indent=4)
+    except Exception as e:
+        print(f"❌ Error Saving History: {e}")
 
 def get_places_by_gps(q, lat, lon, gl, start=0):
     if not API_KEY: return None
@@ -107,6 +121,11 @@ def scraper_worker(params):
     job_status["new_logs"] = []
     job_status["current_filename"] = filename
 
+    countries = params['regions'] if isinstance(params['regions'], list) else [params['regions']]
+    
+    # SAVE HISTORY IMMEDIATELY (So it shows up in UI)
+    save_to_history(params['term'], countries, 0, filename)
+
     try:
         with open(full_path, 'w', newline='', encoding='utf-8') as f:
             w = csv.writer(f)
@@ -114,12 +133,12 @@ def scraper_worker(params):
             if params.get('scrape_emails'): h.insert(7, 'Emails')
             w.writerow(h)
 
+        # UNLIMITED LOGIC: If val is None/0, use 1 million
         limit_val = params.get('limit_val')
-        # If limit is 0 or extremely high, treat as effectively infinite
         limit = int(limit_val) if limit_val else 1000000
+        
         seen = set()
         email_scraper = WebsiteScraper() if params.get('scrape_emails') else None
-        countries = params['regions'] if isinstance(params['regions'], list) else [params['regions']]
         q_fmt = f'"{params["term"]}"' if params['match_type']=='literal' else params['term']
 
         for c_code in countries:
@@ -199,17 +218,26 @@ def scraper_worker(params):
         print(f"WORKER ERROR: {e}")
     finally:
         job_status["is_running"] = False
+        # Save one last time to be sure
+        save_to_history(params['term'], countries, job_status["total_leads"], filename)
 
 # --- ROUTES ---
 @app.route('/')
 def index(): return render_template('index.html')
+
+@app.route('/request-feature', methods=['POST'])
+def request_feature():
+    data = request.json
+    feature = data.get('feature_text')
+    with open("feature_requests.txt", "a") as f:
+        f.write(f"[{datetime.now()}] Anonymous: {feature}\n")
+    return jsonify({"status": "success", "message": "Request received!"})
 
 @app.route('/run-scrape', methods=['POST'])
 def run_scrape():
     if job_status["is_running"]: return jsonify({"status": "error", "message": "Job running"})
     data = request.json
     
-    # Generate clean filename HERE and pass it to worker
     safe_term = clean_filename(data.get('search_term'))
     filename = f"Maps_{safe_term}_{int(time.time())}.csv"
     
@@ -220,7 +248,7 @@ def run_scrape():
         'match_type': data.get('match_type'),
         'regions': data.get('region'), 
         'sub_region': data.get('sub_region'),
-        'filename': filename, # Passing pre-generated filename
+        'filename': filename,
         'skip_no_website': data.get('skip_no_website'),
         'min_rating': data.get('min_rating'), 
         'scrape_emails': data.get('scrape_emails')
@@ -234,6 +262,12 @@ def run_scrape():
 @app.route('/status', methods=['GET'])
 def status():
     r = job_status.copy(); job_status["new_logs"] = []; return jsonify(r)
+
+@app.route('/history', methods=['GET'])
+def get_history():
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE,'r') as f: return jsonify(json.load(f))
+    return jsonify([])
 
 @app.route('/download/<path:filename>')
 def download_file(filename):
