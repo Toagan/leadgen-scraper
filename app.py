@@ -125,8 +125,10 @@ def scraper_worker(params):
     
     # GUEST MODE LOGIC
     limit = int(params.get('limit_val', 50))
-    if params.get('is_guest'):
-        limit = 10  # Hard cap for guests
+    is_guest = params.get('is_guest', False)
+    
+    if is_guest:
+        limit = 10  
         job_status["new_logs"].append("🔒 GUEST MODE: Limiting to 10 leads.")
 
     email_scraper = WebsiteScraper() if params.get('scrape_emails') else None
@@ -160,13 +162,13 @@ def scraper_worker(params):
 
         for city in cities:
             if not job_status["is_running"]: break
-            # CHECK LIMITS
-            if params['limit_mode']=='leads' and job_status["total_leads"]>=limit: break
+            # Outer limit check
+            if job_status["total_leads"] >= limit: break
             
             job_status["current_city"] = f"{city['name']} ({c_code.upper()})"
             
             for page in range(15):
-                if params['limit_mode']=='leads' and job_status["total_leads"]>=limit: break
+                if job_status["total_leads"] >= limit: break
                 
                 data = get_places_by_gps(f"{q_fmt} in {city['name']}", city['lat'], city['lon'], c_code, page*20)
                 job_status["api_calls"]+=1
@@ -175,6 +177,11 @@ def scraper_worker(params):
                 with open(full_path, 'a', newline='', encoding='utf-8') as f:
                     w = csv.writer(f)
                     for p in data['places']:
+                        # STRICT INNER LOOP CHECK
+                        if job_status["total_leads"] >= limit:
+                            if is_guest: job_status["new_logs"].append("🔒 Guest Limit Reached! Please login.")
+                            break
+
                         pid, web, rate = p.get('place_id'), p.get('website',''), p.get('rating',0)
                         if pid in seen: continue
                         if params['skip_no_website'] and not web: continue
@@ -192,11 +199,6 @@ def scraper_worker(params):
                             if ems: job_status["new_logs"].append(f"📧 Got email for {p.get('title')}")
                         else: job_status["new_logs"].append(f"{p.get('title')}")
                         w.writerow(row)
-                        
-                        # Stop immediately if guest limit hit inside loop
-                        if params.get('is_guest') and job_status["total_leads"] >= 10:
-                            job_status["new_logs"].append("🔒 Guest Limit Reached! Log in for more.")
-                            break
 
                 if new==0: break
                 time.sleep(0.2)
@@ -232,12 +234,17 @@ def linkedin_worker(companies, roles, limit, filename, is_guest=False):
                 with open(path, 'a', newline='', encoding='utf-8') as f:
                     w = csv.writer(f)
                     for item in res:
+                        # STRICT INNER LOOP CHECK
+                        if job_status["total_leads"] >= int(limit):
+                            if is_guest: job_status["new_logs"].append("🔒 Guest Limit Reached! Please login.")
+                            break
+
                         job_status["total_leads"]+=1
                         job_status["new_logs"].append(f"Found {item.get('title')}")
                         w.writerow([url, dom, r, item.get('title'), item.get('link'), item.get('snippet')])
-                        if is_guest and job_status["total_leads"] >= 10: break
+                        
                 if len(res)<10: break
-                if is_guest and job_status["total_leads"] >= 10: break
+                if job_status["total_leads"] >= int(limit): break # Break pagination loop
                 time.sleep(0.5)
     job_status["is_running"] = False
     save_to_history("LinkedIn Search", "Global", job_status["total_leads"], filename)
