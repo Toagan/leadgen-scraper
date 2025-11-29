@@ -66,63 +66,106 @@
                 </div>
                 
                 <div class="text-xs text-slate-400 font-medium uppercase tracking-widest">
-                    Admin Access
+                    Admin Console
                 </div>
             </div>
 
             <div class="p-8 max-w-xl mx-auto w-full flex-1">
-                <div class="flex border-b border-slate-200 mb-8 gap-6">
-                    <button id="tabMaps" class="tab-btn active pb-3 text-sm flex items-center gap-2"><i class="fas fa-map-marker-alt"></i> Google Maps</button>
-                </div>
-
-                <div id="inputsMaps" class="space-y-6 transition-opacity duration-300">
+                
+                <div class="space-y-8">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Industry</label>
-                        <input type="text" id="searchTerm" placeholder="e.g. Gyms, Dentists..." class="custom-input w-full px-4 py-3 rounded-xl text-sm">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Target Industry</label>
+                        <div class="relative group">
+                            <i class="fas fa-search absolute left-4 top-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            <input type="text" id="searchTerm" placeholder="e.g. Roofers, SaaS Startups, Cafes..." class="custom-input w-full pl-11 pr-4 py-3.5 rounded-xl text-sm font-medium text-slate-700">
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Limit</label>
-                            <select id="limitMode" onchange="updateLimitLabel()" class="custom-input w-full px-4 py-3 rounded-xl text-sm"><option value="leads">Leads</option><option value="credits">Credits</option></select>
+                    <div class="grid grid-cols-12 gap-6">
+                        <div class="col-span-6">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Limit Strategy</label>
+                            <div class="relative">
+                                <select id="limitMode" onchange="updateLimitLabel()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium appearance-none cursor-pointer text-slate-700">
+                                    <option value="leads">Total Leads</option>
+                                    <option value="credits">API Credits</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-4 top-4 text-slate-400 text-xs pointer-events-none"></i>
+                            </div>
                         </div>
-                        <div>
-                            <label id="limitLabel" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Amount</label>
-                            <input type="number" id="limitValue" value="50" class="custom-input w-full px-4 py-3 rounded-xl text-sm">
+                        
+                        <div class="col-span-6">
+                            <div class="flex justify-between items-center mb-2.5">
+                                <label id="limitLabel" class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Max Amount</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="unlimitedCheck" onchange="toggleUnlimited()" class="w-3 h-3 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+                                    <label for="unlimitedCheck" class="text-[10px] font-bold text-blue-600 uppercase cursor-pointer select-none">As much as possible</label>
+                                </div>
+                            </div>
+                            <input type="number" id="limitValue" value="50" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-700 transition-all">
                         </div>
                     </div>
 
                     <div class="relative">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Countries</label>
-                        <div onclick="toggleCountryDropdown()" class="custom-input w-full px-4 py-3 rounded-xl text-sm cursor-pointer flex justify-between items-center"><span id="selectedCountriesText">-- Select --</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div>
-                        <div id="countryDropdownMenu" class="multi-select-dropdown shadow-lg border-slate-200">
-                            <div class="p-2 space-y-1 max-h-48 overflow-y-auto">
-                                <label class="checkbox-item flex items-center px-3 py-2 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" name="country" value="de" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇩🇪 Germany</span></label>
-                                <label class="checkbox-item flex items-center px-3 py-2 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" name="country" value="us" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇺🇸 USA</span></label>
-                                <label class="checkbox-item flex items-center px-3 py-2 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" name="country" value="uk" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇬🇧 UK</span></label>
-                                <label class="checkbox-item flex items-center px-3 py-2 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" name="country" value="fr" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedCountries()"><span class="ml-2 text-sm">🇫🇷 France</span></label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Target Markets</label>
+                        <div onclick="toggleCountryDropdown()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center text-slate-700 hover:border-blue-300">
+                            <span id="selectedCountriesText">-- Select Countries --</span>
+                            <i class="fas fa-globe text-slate-400"></i>
+                        </div>
+                        <div id="countryDropdownMenu" class="multi-select-dropdown shadow-xl border-slate-200">
+                            <div class="p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="de" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇩🇪 Germany</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="us" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇺🇸 USA</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="uk" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇬🇧 UK</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="fr" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇫🇷 France</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="es" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇪🇸 Spain</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="it" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇮🇹 Italy</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="ca" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇨🇦 Canada</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="au" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇦🇺 Australia</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="ch" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇨🇭 Switzerland</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="br" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇧🇷 Brazil</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="cn" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇨🇳 China</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="in" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇮🇳 India</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="jp" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇯🇵 Japan</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="country" value="ru" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedCountries()"><span class="ml-3 text-sm font-medium text-slate-700">🇷🇺 Russia</span></label>
                             </div>
                         </div>
                     </div>
-                    
-                    <div id="stateSection" class="hidden relative">
-                        <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2">States (DE)</label>
-                        <div onclick="toggleMultiDropdown()" class="custom-input w-full px-4 py-3 rounded-xl text-sm cursor-pointer flex justify-between items-center border-blue-200 bg-blue-50/30 text-slate-700"><span id="selectedStatesText">-- All --</span><i class="fas fa-map text-blue-400"></i></div>
-                        <div id="multiDropdownMenu" class="multi-select-dropdown shadow-lg border-blue-100">
-                            <div class="p-2 space-y-1"><label class="checkbox-item flex items-center px-3 py-2 hover:bg-blue-50 rounded cursor-pointer"><input type="checkbox" name="state" value="Berlin" class="w-4 h-4 text-blue-600 rounded" onchange="updateSelectedText()"><span class="ml-2 text-sm">Berlin</span></label></div>
+
+                    <div id="stateSection" class="hidden relative animate-fade-in-down">
+                        <label class="block text-xs font-bold text-blue-600 uppercase tracking-wider mb-2.5">Target States (DE)</label>
+                        <div onclick="toggleMultiDropdown()" class="custom-input w-full px-4 py-3.5 rounded-xl text-sm font-medium cursor-pointer flex justify-between items-center border-blue-200 bg-blue-50/30 text-slate-700">
+                            <span id="selectedStatesText">-- All States --</span>
+                            <i class="fas fa-map text-blue-400"></i>
+                        </div>
+                        <div id="multiDropdownMenu" class="multi-select-dropdown shadow-xl border-blue-100">
+                            <div class="p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Baden-Wuerttemberg" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Baden-Württemberg</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Bavaria" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Bavaria</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Berlin" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Berlin</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Brandenburg" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Brandenburg</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Bremen" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Bremen</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Hamburg" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Hamburg</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Hesse" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Hesse</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Mecklenburg-Vorpommern" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Mecklenburg-Vorpommern</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Lower Saxony" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Lower Saxony</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="North Rhine-Westphalia" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">North Rhine-Westphalia</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Rheinland-Pfalz" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Rhineland-Palatinate</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Saarland" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Saarland</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Saxony" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Saxony</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Saxony-Anhalt" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Saxony-Anhalt</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Schleswig-Holstein" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Schleswig-Holstein</span></label>
+                                <label class="checkbox-item flex items-center px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"><input type="checkbox" name="state" value="Thuringia" class="w-4 h-4 text-blue-600 rounded border-slate-300" onchange="updateSelectedText()"><span class="ml-3 text-sm font-medium text-slate-700">Thuringia</span></label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-8 pt-6 border-t border-slate-100">
-                    <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                        <i class="fas fa-play"></i> Start Extraction
+                <div class="mt-12 pt-6 border-t border-slate-100 flex items-center justify-between">
+                    <button onclick="document.getElementById('featureModal').classList.remove('hidden')" class="text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-2">
+                        <i class="far fa-lightbulb"></i> Request Source
                     </button>
-                </div>
-
-                 <div class="text-center mt-4">
-                    <button onclick="document.getElementById('featureModal').classList.remove('hidden')" class="text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors">
-                        <i class="far fa-lightbulb mr-1"></i> Request Feature / Source
+                    <button id="runBtn" onclick="startScrape()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2.5">
+                        <i class="fas fa-rocket"></i> Launch Scraper
                     </button>
                 </div>
             </div>
@@ -167,7 +210,7 @@
                 <h3 class="text-xl font-bold text-slate-900">Request Source</h3>
                 <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
             </div>
-            <textarea id="featureText" class="w-full border border-slate-200 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none mb-6 h-32 resize-none" placeholder="e.g. Scrape Instagram..."></textarea>
+            <textarea id="featureText" class="w-full border border-slate-200 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none mb-6 h-32 resize-none" placeholder="e.g. Scrape Instagram, YellowPages, or Trustpilot..."></textarea>
             <div class="flex justify-end gap-3">
                 <button onclick="document.getElementById('featureModal').classList.add('hidden')" class="px-5 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">Cancel</button>
                 <button onclick="submitFeature()" class="px-5 py-2.5 text-sm font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all">Submit Request</button>
@@ -189,7 +232,7 @@
         }});
 
         // APP LOGIC
-        let source = 'maps'; let pollingInterval = null;
+        let pollingInterval = null;
         setTimeout(() => { const l=document.getElementById('loader'); if(l) l.style.display='none'; }, 3300);
 
         window.onload = function() {
@@ -200,6 +243,27 @@
             });
         };
 
+        async function submitFeature() {
+            const t = document.getElementById('featureText').value; if(!t) return;
+            try { await fetch('/request-feature', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({feature_text:t}) }); alert("Request Sent!"); document.getElementById('featureModal').classList.add('hidden'); } catch(e){}
+        }
+
+        function toggleUnlimited() {
+            const chk = document.getElementById('unlimitedCheck');
+            const inp = document.getElementById('limitValue');
+            if(chk.checked) {
+                inp.disabled = true;
+                inp.value = '';
+                inp.placeholder = '∞ Unlimited';
+                inp.classList.add('bg-slate-100', 'text-slate-400');
+            } else {
+                inp.disabled = false;
+                inp.value = '50';
+                inp.placeholder = '50';
+                inp.classList.remove('bg-slate-100', 'text-slate-400');
+            }
+        }
+
         function toggleCountryDropdown() { document.getElementById('countryDropdownMenu').classList.toggle('open'); }
         function updateSelectedCountries() {
             const c=document.querySelectorAll('input[name="country"]:checked');
@@ -207,22 +271,19 @@
             if(Array.from(c).map(x=>x.value).includes('de')) document.getElementById('stateSection').classList.remove('hidden'); else document.getElementById('stateSection').classList.add('hidden');
         }
         function getSelectedCountries(){ return Array.from(document.querySelectorAll('input[name="country"]:checked')).map(x=>x.value); }
+
         function toggleMultiDropdown() { document.getElementById('multiDropdownMenu').classList.toggle('open'); }
         function updateSelectedText() { const c=document.querySelectorAll('input[name="state"]:checked').length; document.getElementById('selectedStatesText').innerText=c===0?"-- All --":`${c} Selected`; }
         function getSelectedStates(){ return Array.from(document.querySelectorAll('input[name="state"]:checked')).map(x=>x.value); }
+        
         function updateLimitLabel(){ const m=document.getElementById('limitMode').value; document.getElementById('limitLabel').innerText=m==='leads'?"Target Leads":"Max Credits"; document.getElementById('limitValue').placeholder=m==='leads'?"50":"100"; }
-
-        async function submitFeature() {
-            const t = document.getElementById('featureText').value; if(!t) return;
-            try { await fetch('/request-feature', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({feature_text:t}) }); alert("Request Sent!"); document.getElementById('featureModal').classList.add('hidden'); } catch(e){}
-        }
 
         // --- TABLE ROW INJECTOR ---
         function addTableRow(logText) {
             document.getElementById('emptyState').style.display = 'none';
             const table = document.getElementById('resultsTable');
             
-            // Handle Email vs Regular logs
+            // Parse log text "Found: Title" -> Title
             let title = logText.replace("+ ", "").replace("Found ", "").replace("📧 Found Email: ", "");
             let status = logText.includes("Email") ? "EMAIL FOUND" : "FOUND";
             let statusColor = logText.includes("Email") ? "bg-purple-100 text-purple-700" : "bg-emerald-100 text-emerald-700";
@@ -248,8 +309,11 @@
                 const t=document.getElementById('searchTerm').value; const c=getSelectedCountries();
                 if(!t) throw new Error("Enter keyword"); if(c.length===0) throw new Error("Select country");
                 
+                // CHECK UNLIMITED
+                const limitVal = document.getElementById('unlimitedCheck').checked ? 1000000 : document.getElementById('limitValue').value;
+
                 await fetch('/run-scrape',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-                    search_term:t, limit_value:document.getElementById('limitValue').value, limit_mode:document.getElementById('limitMode').value,
+                    search_term:t, limit_value:limitVal, limit_mode:document.getElementById('limitMode').value,
                     match_type:'rough', region:c, sub_region:getSelectedStates(), skip_no_website:false,
                     scrape_emails:false, min_rating:0
                 })});

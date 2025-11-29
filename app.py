@@ -31,11 +31,20 @@ for folder in [DATA_DIR, UPLOAD_FOLDER]:
 HISTORY_FILE = os.path.join(BASE_DIR, "search_history.json")
 
 REGION_FILES = {
-    'de': 'data/cities.txt', 'us': 'data/cities_us.txt', 'uk': 'data/cities_uk.txt',
-    'fr': 'data/cities_fr.txt', 'es': 'data/cities_es.txt', 'it': 'data/cities_it.txt',
-    'au': 'data/cities_au.txt', 'ch': 'data/cities_ch.txt',
-    'br': 'data/cities_br.txt', 'ca': 'data/cities_ca.txt', 'cn': 'data/cities_cn.txt',
-    'in': 'data/cities_in.txt', 'jp': 'data/cities_jp.txt', 'ru': 'data/cities_ru.txt'
+    'de': 'data/cities.txt',      # Germany (Default)
+    'us': 'data/cities_us.txt',   # USA
+    'uk': 'data/cities_uk.txt',   # UK
+    'fr': 'data/cities_fr.txt',   # France
+    'es': 'data/cities_es.txt',   # Spain
+    'it': 'data/cities_it.txt',   # Italy
+    'au': 'data/cities_au.txt',   # Australia
+    'br': 'data/cities_br.txt',   # Brazil
+    'ca': 'data/cities_ca.txt',   # Canada
+    'ch': 'data/cities_ch.txt',   # Switzerland
+    'cn': 'data/cities_cn.txt',   # China
+    'in': 'data/cities_in.txt',   # India
+    'jp': 'data/cities_jp.txt',   # Japan
+    'ru': 'data/cities_ru.txt'    # Russia
 }
 
 job_status = {"is_running": False, "current_city": "", "total_leads": 0, "api_calls": 0, "new_logs": [], "current_filename": ""}
