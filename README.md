@@ -13,11 +13,18 @@
 ### Smart Scraping (Germany Optimized)
 * **Population-Based City Prioritization:** Cities are sorted by population (largest first) for maximum lead coverage.
 * **Dynamic Zoom Levels:** Larger cities use wider zoom (12z) for more coverage, smaller cities use tighter zoom (15z).
-* **Dynamic Pagination:** Major cities get up to 6 pages of results, smaller cities get 1-2 pages.
-* **Three Scrape Modes:**
+* **Dynamic Pagination:** Continues fetching pages until no new unique results are found.
+* **Four Scrape Modes:**
   - **Quick:** Major cities only (50k+ population, ~240 cities)
   - **Smart:** Balanced coverage (10k+ population, ~1,700 cities)
-  - **Thorough:** Maximum coverage (5k+ population, ~2,900 cities)
+  - **Thorough:** High coverage (5k+ population, ~2,900 cities)
+  - **Maximum (PLZ):** Complete coverage using 8,300 postal codes - includes ALL rural areas
+
+### Maximum Coverage Mode (PLZ-Based)
+* **Postal Code Grid:** Uses 8,298 German postal codes (PLZ) for complete geographic coverage.
+* **Rural Area Coverage:** Unlike city-based modes, PLZ mode covers every corner of Germany including small villages and rural areas.
+* **Dynamic Pagination:** Continues scraping each PLZ until no new unique results are found.
+* **Ideal For:** Getting ALL businesses of a type in a specific region (e.g., all dentists in Bavaria).
 
 ### Bundesland Filtering (Germany Only)
 * **State-Level Filtering:** Select specific German federal states (Bundesländer) to scrape.

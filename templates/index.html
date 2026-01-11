@@ -146,20 +146,25 @@
                         <!-- Scrape Mode -->
                         <div class="mb-4">
                             <label class="text-xs text-gray-600 mb-2 block">Scrape Mode (Germany optimized)</label>
-                            <div class="grid grid-cols-3 gap-2">
+                            <div class="grid grid-cols-4 gap-2">
                                 <div id="modeQuick" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setScrapeMode('quick')">
                                     <div class="text-sm font-bold text-gray-800">Quick</div>
-                                    <div class="text-[10px] text-gray-400">240 cities (50k+)</div>
+                                    <div class="text-[10px] text-gray-400">240 cities</div>
                                 </div>
                                 <div id="modeSmart" class="precision-card selected bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setScrapeMode('smart')">
                                     <div class="text-sm font-bold text-gray-800">Smart</div>
-                                    <div class="text-[10px] text-gray-400">1,700 cities (10k+)</div>
+                                    <div class="text-[10px] text-gray-400">1,700 cities</div>
                                 </div>
                                 <div id="modeThorough" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setScrapeMode('thorough')">
                                     <div class="text-sm font-bold text-gray-800">Thorough</div>
-                                    <div class="text-[10px] text-gray-400">2,900 cities (5k+)</div>
+                                    <div class="text-[10px] text-gray-400">2,900 cities</div>
+                                </div>
+                                <div id="modeMax" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center border-2 border-amber-200" onclick="setScrapeMode('max')">
+                                    <div class="text-sm font-bold text-amber-600">Maximum</div>
+                                    <div class="text-[10px] text-gray-400">8,300 PLZ</div>
                                 </div>
                             </div>
+                            <p id="maxModeInfo" class="text-[10px] text-amber-600 mt-2 hidden">Maximum mode uses 8,300 postal codes to cover ALL of Germany including rural areas. Uses more API credits.</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -657,7 +662,15 @@
             document.getElementById('modeQuick').classList.remove('selected');
             document.getElementById('modeSmart').classList.remove('selected');
             document.getElementById('modeThorough').classList.remove('selected');
-            document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('selected');
+            document.getElementById('modeMax').classList.remove('selected');
+
+            if (mode === 'max') {
+                document.getElementById('modeMax').classList.add('selected');
+                document.getElementById('maxModeInfo').classList.remove('hidden');
+            } else {
+                document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('selected');
+                document.getElementById('maxModeInfo').classList.add('hidden');
+            }
         }
 
         function setBatchScrapeMode(mode) {

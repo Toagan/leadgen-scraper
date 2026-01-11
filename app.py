@@ -54,6 +54,48 @@ def get_city_scrape_config(population):
 MIN_POPULATION_DEFAULT = 10000  # Skip cities smaller than this by default
 MIN_POPULATION_THOROUGH = 5000  # Thorough mode includes smaller cities
 
+# PLZ (Postal Code) file for maximum Germany coverage
+PLZ_FILE = 'data/plz_germany.csv'
+
+def load_plz_data(bundeslaender=None):
+    """
+    Load German PLZ (postal code) data with coordinates.
+    Returns list of dicts with plz, lat, lon keys.
+    Optionally filters by Bundesländer.
+    """
+    plz_list = []
+    filtered_count = 0
+
+    try:
+        with open(PLZ_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith(',lat'):  # Skip header
+                    continue
+                parts = line.split(',')
+                if len(parts) >= 3:
+                    plz = parts[0].strip()
+                    lat = parts[1].strip()
+                    lon = parts[2].strip()
+
+                    # Filter by Bundesland if specified
+                    if bundeslaender and len(bundeslaender) > 0:
+                        plz_bundesland = get_bundesland(lat, lon)
+                        if plz_bundesland not in bundeslaender:
+                            filtered_count += 1
+                            continue
+
+                    plz_list.append({
+                        'plz': plz,
+                        'lat': lat,
+                        'lon': lon
+                    })
+    except FileNotFoundError:
+        print(f"PLZ file not found: {PLZ_FILE}")
+        return [], 0
+
+    return plz_list, filtered_count
+
 # German Bundesländer (Federal States) with refined bounding boxes
 # Format: (min_lat, max_lat, min_lon, max_lon)
 # Bounding boxes adjusted to minimize overlaps at state borders
@@ -508,6 +550,165 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
     # Save the completed run to history
     save_to_history(search_term, region, job_status["total_leads"], filename)
 
+
+def plz_scraper_worker(search_term, num_leads, match_type, filename,
+                       min_rating=0, min_reviews=0, bundeslaender=None):
+    """
+    Maximum coverage scraper using PLZ (postal code) grid for Germany.
+    Uses dynamic pagination - continues until no new results are found.
+    Covers all of Germany including rural areas.
+    """
+    global job_status
+    job_status["is_running"] = True
+    job_status["total_leads"] = 0
+    job_status["total_skipped"] = 0
+    job_status["new_logs"] = []
+    job_status["current_filename"] = filename
+    job_status["status_message"] = f"Starting PLZ-based scrape for '{search_term}'..."
+
+    final_query = search_term
+    if match_type == 'literal':
+        final_query = f'"{search_term}"'
+
+    # Log configuration
+    filters_active = ["mode: PLZ (maximum coverage)"]
+    if min_rating > 0:
+        filters_active.append(f"min rating: {min_rating}")
+    if min_reviews > 0:
+        filters_active.append(f"min reviews: {min_reviews}")
+
+    if bundeslaender and len(bundeslaender) > 0:
+        state_names = [BUNDESLAENDER[bl]['name'] for bl in bundeslaender if bl in BUNDESLAENDER]
+        filters_active.append(f"states: {', '.join(state_names)}")
+
+    job_status["new_logs"].append(f"Config: {', '.join(filters_active)}")
+
+    # Load PLZ data
+    plz_list, filtered_count = load_plz_data(bundeslaender)
+
+    if not plz_list:
+        job_status["status_message"] = "Error: No PLZ data found."
+        job_status["is_running"] = False
+        return
+
+    log_msg = f"Loaded {len(plz_list)} postal codes"
+    if filtered_count > 0:
+        log_msg += f" (filtered {filtered_count} by state)"
+    job_status["new_logs"].append(log_msg)
+
+    full_path = os.path.join(DATA_DIR, filename)
+
+    # Initialize CSV with comprehensive headers
+    with open(full_path, mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(CSV_HEADERS)
+
+    # Global set to track all seen business IDs (prevents duplicates)
+    seen_ids = set()
+
+    # Progress tracking
+    total_plz = len(plz_list)
+    processed_plz = 0
+
+    # Scrape each PLZ with dynamic pagination
+    for plz_data in plz_list:
+        if job_status["total_leads"] >= int(num_leads):
+            break
+        if not job_status["is_running"]:
+            break
+
+        processed_plz += 1
+        plz = plz_data['plz']
+        lat = plz_data['lat']
+        lon = plz_data['lon']
+
+        # Update status with progress
+        progress_pct = int((processed_plz / total_plz) * 100)
+        job_status["current_city"] = f"PLZ {plz} ({progress_pct}% - {processed_plz}/{total_plz})"
+
+        plz_leads_before = job_status["total_leads"]
+
+        # Dynamic pagination - continue until no new unique results
+        page = 0
+        consecutive_empty = 0
+        max_pages = 50  # Safety limit
+
+        while page < max_pages:
+            if job_status["total_leads"] >= int(num_leads):
+                break
+            if not job_status["is_running"]:
+                break
+
+            # Use zoom 15 for precise PLZ coverage
+            data = get_places_by_gps(final_query, lat, lon, 'de', page * 20, zoom=15)
+
+            if not data or 'places' not in data or not data['places']:
+                break
+
+            new_items_count = 0
+            with open(full_path, mode='a', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                for p in data['places']:
+                    if job_status["total_leads"] >= int(num_leads):
+                        break
+
+                    # Extract all place data
+                    place_data = extract_place_data(p, final_query, f"PLZ {plz}")
+                    pid = place_data['place_id']
+
+                    if pid and pid not in seen_ids:
+                        seen_ids.add(pid)
+
+                        # Apply filters
+                        if not passes_filters(place_data, min_rating, min_reviews, False, False):
+                            job_status["total_skipped"] += 1
+                            continue
+
+                        new_items_count += 1
+                        job_status["total_leads"] += 1
+
+                        # Log visible to user (less verbose for PLZ mode)
+                        if job_status["total_leads"] % 10 == 0:  # Log every 10th lead
+                            job_status["new_logs"].append(
+                                f"{job_status['total_leads']} leads... (PLZ {plz})"
+                            )
+
+                        # Write to CSV
+                        write_place_to_csv(writer, place_data)
+
+            # Dynamic pagination: stop if no new unique items found
+            if new_items_count == 0:
+                consecutive_empty += 1
+                if consecutive_empty >= 2:  # Stop after 2 consecutive empty pages
+                    break
+            else:
+                consecutive_empty = 0
+
+            page += 1
+            time.sleep(0.3)  # Respectful API delay
+
+        # Log PLZ summary if we got results
+        plz_leads = job_status["total_leads"] - plz_leads_before
+        if plz_leads >= 10:  # Only log PLZs with significant results
+            job_status["new_logs"].append(f"  → PLZ {plz}: {plz_leads} leads")
+
+    # Job Finished
+    job_status["is_running"] = False
+    if job_status["total_leads"] >= int(num_leads):
+        job_status["status_message"] = "Limit reached."
+    else:
+        job_status["status_message"] = "Job finished - all PLZ areas scraped."
+
+    if job_status["total_skipped"] > 0:
+        job_status["new_logs"].append(f"Filtered out {job_status['total_skipped']} businesses")
+
+    job_status["new_logs"].append(f"Total unique businesses found: {job_status['total_leads']}")
+    job_status["current_city"] = "Done"
+
+    # Save the completed run to history
+    save_to_history(search_term, 'de', job_status["total_leads"], filename)
+
+
 # --- ROUTES ---
 
 @app.route('/')
@@ -525,7 +726,8 @@ def run_scrape():
     # Sanitize search term for filename
     safe_term = "".join([c if c.isalnum() else "_" for c in data.get('search_term')])
     timestamp = int(time.time())
-    filename = f"{safe_term}_{data.get('region')}_{timestamp}.csv"
+    region = data.get('region', 'de')
+    filename = f"{safe_term}_{region}_{timestamp}.csv"
 
     # Extract filter parameters
     min_rating = float(data.get('min_rating', 0))
@@ -533,20 +735,37 @@ def run_scrape():
     scrape_mode = data.get('scrape_mode', 'smart')
     bundeslaender = data.get('bundeslaender', [])  # List of Bundesland codes for Germany
 
-    thread = threading.Thread(
-        target=scraper_worker,
-        args=(
-            data.get('search_term'),
-            int(data.get('num_leads', 10)),
-            data.get('match_type'),
-            data.get('region'),
-            filename,
-            min_rating,
-            min_reviews,
-            scrape_mode,
-            bundeslaender
+    # Use PLZ-based scraper for maximum coverage mode (Germany only)
+    if scrape_mode == 'max' and region == 'de':
+        thread = threading.Thread(
+            target=plz_scraper_worker,
+            args=(
+                data.get('search_term'),
+                int(data.get('num_leads', 10)),
+                data.get('match_type'),
+                filename,
+                min_rating,
+                min_reviews,
+                bundeslaender
+            )
         )
-    )
+    else:
+        # Use regular city-based scraper
+        thread = threading.Thread(
+            target=scraper_worker,
+            args=(
+                data.get('search_term'),
+                int(data.get('num_leads', 10)),
+                data.get('match_type'),
+                region,
+                filename,
+                min_rating,
+                min_reviews,
+                scrape_mode,
+                bundeslaender
+            )
+        )
+
     thread.daemon = True
     thread.start()
 

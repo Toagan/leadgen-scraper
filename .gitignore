@@ -13,3 +13,6 @@ search_history.json
 
 # Mac system files
 .DS_Store
+# Temporary/downloaded files
+leadgen-scraper-main/
+leadgen-scraper.zip
