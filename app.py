@@ -480,7 +480,14 @@ job_status = {
     "total_skipped": 0,
     "status_message": "Idle",
     "new_logs": [],
-    "current_filename": ""
+    "current_filename": "",
+    # Progress tracking
+    "start_time": None,
+    "estimated_total": 0,
+    "processed_locations": 0,
+    "total_locations": 0,
+    "leads_per_minute": 0,
+    "eta_minutes": 0
 }
 
 # CSV Header for exports - comprehensive fields for email outbound
@@ -663,6 +670,12 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
     job_status["new_logs"] = []
     job_status["current_filename"] = filename
     job_status["status_message"] = f"Starting scrape for '{search_term}' in {region.upper()}..."
+    job_status["start_time"] = time.time()
+    job_status["estimated_total"] = 0
+    job_status["processed_locations"] = 0
+    job_status["total_locations"] = 0
+    job_status["leads_per_minute"] = 0
+    job_status["eta_minutes"] = 0
 
     final_query = search_term
     if match_type == 'literal':
@@ -745,6 +758,9 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
             log_msg += f", filtered {filtered_by_state} by state"
         job_status["new_logs"].append(log_msg)
 
+        # Set total locations for progress tracking
+        job_status["total_locations"] = len(cities)
+
     except FileNotFoundError:
         error_msg = f"Error: City list {target_file} not found."
         print(error_msg)
@@ -771,15 +787,28 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
     db_new_count = 0
 
     # Scrape Loop with smart configuration per city
-    for city in cities:
+    for city_idx, city in enumerate(cities):
         if job_status["total_leads"] >= int(num_leads): break
         if not job_status["is_running"]: break
+
+        # Update progress tracking
+        job_status["processed_locations"] = city_idx
+        elapsed = time.time() - job_status["start_time"]
+        if elapsed > 0 and job_status["total_leads"] > 0:
+            job_status["leads_per_minute"] = round(job_status["total_leads"] / (elapsed / 60), 1)
+            remaining_locations = len(cities) - city_idx
+            if job_status["leads_per_minute"] > 0:
+                # Estimate based on average leads per location
+                avg_leads_per_loc = job_status["total_leads"] / max(city_idx, 1)
+                estimated_remaining = remaining_locations * avg_leads_per_loc
+                job_status["eta_minutes"] = round(estimated_remaining / job_status["leads_per_minute"], 1)
 
         # Get dynamic config based on city population
         zoom_level, max_pages = get_city_scrape_config(city['population'])
 
         pop_str = f" ({city['population']:,})" if city['population'] > 0 else ""
-        job_status["current_city"] = f"{city['name']}{pop_str}"
+        progress_pct = int((city_idx / len(cities)) * 100) if cities else 0
+        job_status["current_city"] = f"{city['name']}{pop_str} ({progress_pct}%)"
         city_specific_query = f"{final_query} in {city['name']}"
 
         city_leads_before = job_status["total_leads"]
@@ -879,6 +908,12 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
     job_status["new_logs"] = []
     job_status["current_filename"] = filename
     job_status["status_message"] = f"Starting PLZ-based scrape for '{search_term}'..."
+    job_status["start_time"] = time.time()
+    job_status["estimated_total"] = 0
+    job_status["processed_locations"] = 0
+    job_status["total_locations"] = 0
+    job_status["leads_per_minute"] = 0
+    job_status["eta_minutes"] = 0
 
     final_query = search_term
     if match_type == 'literal':
@@ -909,6 +944,7 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
     if filtered_count > 0:
         log_msg += f" (filtered {filtered_count} by state)"
     job_status["new_logs"].append(log_msg)
+    job_status["total_locations"] = len(plz_list)
 
     full_path = os.path.join(DATA_DIR, filename)
 
@@ -932,16 +968,24 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
 
     # Progress tracking
     total_plz = len(plz_list)
-    processed_plz = 0
 
     # Scrape each PLZ with dynamic pagination
-    for plz_data in plz_list:
+    for plz_idx, plz_data in enumerate(plz_list):
         if job_status["total_leads"] >= int(num_leads):
             break
         if not job_status["is_running"]:
             break
 
-        processed_plz += 1
+        # Update progress tracking
+        job_status["processed_locations"] = plz_idx
+        elapsed = time.time() - job_status["start_time"]
+        if elapsed > 0 and job_status["total_leads"] > 0:
+            job_status["leads_per_minute"] = round(job_status["total_leads"] / (elapsed / 60), 1)
+            remaining_plz = total_plz - plz_idx
+            if job_status["leads_per_minute"] > 0:
+                avg_leads_per_plz = job_status["total_leads"] / max(plz_idx, 1)
+                estimated_remaining = remaining_plz * avg_leads_per_plz
+                job_status["eta_minutes"] = round(estimated_remaining / job_status["leads_per_minute"], 1)
         plz = plz_data['plz']
         lat = plz_data['lat']
         lon = plz_data['lon']
@@ -1073,6 +1117,12 @@ def multi_query_scraper_worker(queries, num_leads, region, filename,
     job_status["new_logs"] = []
     job_status["current_filename"] = filename
     job_status["status_message"] = f"Starting multi-query scrape ({len(queries)} variations)..."
+    job_status["start_time"] = time.time()
+    job_status["estimated_total"] = 0
+    job_status["processed_locations"] = 0
+    job_status["total_locations"] = 0
+    job_status["leads_per_minute"] = 0
+    job_status["eta_minutes"] = 0
 
     job_status["new_logs"].append(f"Running {len(queries)} query variations:")
     for i, q in enumerate(queries[:5], 1):  # Show first 5
@@ -1149,8 +1199,11 @@ def multi_query_scraper_worker(queries, num_leads, region, filename,
         return
 
     job_status["new_logs"].append(f"Loaded {len(cities)} cities")
+    # Total locations = cities * queries
+    job_status["total_locations"] = len(cities) * len(queries)
 
     # Run each query
+    total_iterations = 0
     for query_idx, query in enumerate(queries):
         if job_status["total_leads"] >= int(num_leads):
             break
@@ -1159,14 +1212,27 @@ def multi_query_scraper_worker(queries, num_leads, region, filename,
 
         job_status["new_logs"].append(f"--- Query {query_idx + 1}/{len(queries)}: {query} ---")
 
-        for city in cities:
+        for city_idx, city in enumerate(cities):
             if job_status["total_leads"] >= int(num_leads):
                 break
             if not job_status["is_running"]:
                 break
 
+            # Update progress tracking
+            total_iterations += 1
+            job_status["processed_locations"] = total_iterations
+            elapsed = time.time() - job_status["start_time"]
+            if elapsed > 0 and job_status["total_leads"] > 0:
+                job_status["leads_per_minute"] = round(job_status["total_leads"] / (elapsed / 60), 1)
+                remaining = job_status["total_locations"] - total_iterations
+                if job_status["leads_per_minute"] > 0:
+                    avg_leads_per_iter = job_status["total_leads"] / max(total_iterations, 1)
+                    estimated_remaining = remaining * avg_leads_per_iter
+                    job_status["eta_minutes"] = round(estimated_remaining / job_status["leads_per_minute"], 1)
+
             zoom_level, max_pages = get_city_scrape_config(city['population'])
-            job_status["current_city"] = f"{city['name']} [{query[:20]}...]"
+            progress_pct = int((total_iterations / job_status["total_locations"]) * 100) if job_status["total_locations"] > 0 else 0
+            job_status["current_city"] = f"{city['name']} [{query[:15]}...] ({progress_pct}%)"
 
             city_specific_query = f"{query} in {city['name']}"
 
@@ -1665,6 +1731,50 @@ def batch_scraper_worker(selected_countries, num_leads_per_term, match_type,
     if job_status["total_skipped"] > 0:
         job_status["new_logs"].append(f"Total filtered out: {job_status['total_skipped']} businesses")
 
+
+@app.route('/run-bulk-keywords', methods=['POST'])
+def run_bulk_keywords():
+    """Start a bulk search with multiple keywords."""
+    if job_status["is_running"]:
+        return jsonify({"status": "error", "message": "Job already running."})
+
+    data = request.json
+    keywords = data.get('keywords', [])
+    num_leads = int(data.get('num_leads', 500))
+    region = data.get('region', 'de')
+    min_rating = float(data.get('min_rating', 0))
+    min_reviews = int(data.get('min_reviews', 0))
+    scrape_mode = data.get('scrape_mode', 'smart')
+
+    if not keywords or len(keywords) == 0:
+        return jsonify({"status": "error", "message": "No keywords provided."})
+
+    # Generate filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    first_keyword = keywords[0].replace(' ', '_')[:20]
+    filename = f"bulk_{first_keyword}_{len(keywords)}kw_{region}_{timestamp}.csv"
+
+    # Use the multi_query_scraper_worker which handles multiple queries with global deduplication
+    thread = threading.Thread(
+        target=multi_query_scraper_worker,
+        args=(
+            keywords,
+            num_leads,
+            region,
+            filename,
+            min_rating,
+            min_reviews,
+            scrape_mode,
+            []  # No bundeslaender filtering for bulk
+        )
+    )
+
+    thread.daemon = True
+    thread.start()
+
+    return jsonify({"status": "success", "message": f"Started bulk search with {len(keywords)} keywords."})
+
+
 @app.route('/run-batch-scrape', methods=['POST'])
 def run_batch_scrape():
     """Start a batch scrape across multiple countries with their configured search terms."""
@@ -1900,6 +2010,67 @@ def api_db_search_terms():
             "status": "success",
             "search_terms": [{"term": k, "count": v} for k, v in sorted(term_counts.items(), key=lambda x: -x[1])]
         })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# =============================================================================
+# SEARCH TEMPLATES ENDPOINTS
+# =============================================================================
+
+@app.route('/api/templates', methods=['GET'])
+def get_templates():
+    """Get all saved search templates."""
+    if not supabase:
+        return jsonify({"status": "error", "message": "Database not connected"})
+
+    try:
+        result = supabase.table('leadgen_templates').select('*').order('created_at', desc=True).execute()
+        return jsonify({
+            "status": "success",
+            "templates": result.data
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route('/api/templates', methods=['POST'])
+def save_template():
+    """Save a new search template."""
+    if not supabase:
+        return jsonify({"status": "error", "message": "Database not connected"})
+
+    try:
+        data = request.json
+        template = {
+            'name': data.get('name', 'Untitled Template'),
+            'search_terms': data.get('search_terms', []),
+            'country': data.get('country', 'de'),
+            'bundeslaender': data.get('bundeslaender', []),
+            'scrape_mode': data.get('scrape_mode', 'smart'),
+            'min_rating': float(data.get('min_rating', 0)),
+            'min_reviews': int(data.get('min_reviews', 0))
+        }
+
+        result = supabase.table('leadgen_templates').insert(template).execute()
+        return jsonify({
+            "status": "success",
+            "message": "Template saved",
+            "template": result.data[0] if result.data else None
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route('/api/templates/<template_id>', methods=['DELETE'])
+def delete_template(template_id):
+    """Delete a search template."""
+    if not supabase:
+        return jsonify({"status": "error", "message": "Database not connected"})
+
+    try:
+        supabase.table('leadgen_templates').delete().eq('id', template_id).execute()
+        return jsonify({"status": "success", "message": "Template deleted"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 

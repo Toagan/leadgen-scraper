@@ -58,6 +58,9 @@
             <button onclick="switchMainTab('single')" id="tabSingle" class="tab-btn active py-4 text-sm flex items-center gap-2">
                 <i class="fas fa-search"></i> Single Search
             </button>
+            <button onclick="switchMainTab('bulk')" id="tabBulk" class="tab-btn py-4 text-sm flex items-center gap-2">
+                <i class="fas fa-list"></i> Bulk Keywords
+            </button>
             <button onclick="switchMainTab('batch')" id="tabBatch" class="tab-btn py-4 text-sm flex items-center gap-2">
                 <i class="fas fa-layer-group"></i> Batch Search
             </button>
@@ -73,6 +76,27 @@
 
                 <!-- Single Search Panel -->
                 <div id="panelSingle" class="space-y-6 flex-1">
+                    <!-- Templates Section -->
+                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-bookmark text-amber-500"></i>
+                                <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Saved Templates</span>
+                            </div>
+                            <button onclick="saveCurrentAsTemplate()" class="text-xs text-amber-600 hover:text-amber-800 font-medium">
+                                <i class="fas fa-plus mr-1"></i>Save Current
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <select id="templateSelect" onchange="loadTemplate()" class="flex-1 custom-input px-3 py-2 rounded-lg text-sm">
+                                <option value="">-- Select a template --</option>
+                            </select>
+                            <button onclick="deleteSelectedTemplate()" id="deleteTemplateBtn" class="px-3 py-2 bg-red-100 text-red-600 rounded-lg text-xs hover:bg-red-200 transition-all hidden">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Search Mode Toggle -->
                     <div class="flex gap-2 mb-2">
                         <button id="searchModeCustom" onclick="setSearchMode('custom')" class="flex-1 py-2 px-4 rounded-lg text-sm font-medium bg-blue-500 text-white">
@@ -236,6 +260,82 @@
                     </div>
                 </div>
 
+                <!-- Bulk Keywords Panel -->
+                <div id="panelBulk" class="space-y-6 flex-1 hidden">
+                    <div class="bg-purple-50 border border-purple-100 rounded-xl p-4 text-sm text-purple-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Enter multiple keywords (one per line) to run them all with global deduplication. Great for comprehensive coverage of related business types.
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Keywords (one per line)</label>
+                        <textarea id="bulkKeywords" rows="6" placeholder="Marketing Agency&#10;Werbeagentur&#10;Digital Marketing&#10;SEO Agency&#10;Social Media Agency" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium resize-none"></textarea>
+                        <p class="text-xs text-gray-400 mt-1">Tip: Include German translations for better coverage</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Max Leads (Total)</label>
+                            <input type="number" id="bulkNumLeads" value="500" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Region</label>
+                            <div class="relative">
+                                <select id="bulkRegion" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium appearance-none cursor-pointer">
+                                    <option value="de">Germany</option>
+                                    <option value="us">USA</option>
+                                    <option value="uk">UK</option>
+                                    <option value="au">Australia</option>
+                                    <option value="ca">Canada</option>
+                                    <option value="fr">France</option>
+                                    <option value="es">Spain</option>
+                                    <option value="it">Italy</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-4 top-4 text-gray-400 text-xs pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Scrape Settings</label>
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <div id="bulkModeQuick" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setBulkScrapeMode('quick')">
+                                <div class="text-sm font-bold text-gray-800">Quick</div>
+                            </div>
+                            <div id="bulkModeSmart" class="precision-card selected bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setBulkScrapeMode('smart')">
+                                <div class="text-sm font-bold text-gray-800">Smart</div>
+                            </div>
+                            <div id="bulkModeThorough" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setBulkScrapeMode('thorough')">
+                                <div class="text-sm font-bold text-gray-800">Thorough</div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-600 mb-1 block">Min Rating</label>
+                                <select id="bulkMinRating" class="custom-input w-full px-3 py-2 rounded-lg text-sm">
+                                    <option value="0">Any rating</option>
+                                    <option value="3">3+ stars</option>
+                                    <option value="4">4+ stars</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 mb-1 block">Min Reviews</label>
+                                <select id="bulkMinReviews" class="custom-input w-full px-3 py-2 rounded-lg text-sm">
+                                    <option value="0">Any</option>
+                                    <option value="5">5+ reviews</option>
+                                    <option value="10">10+ reviews</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <button id="bulkRunBtn" onclick="startBulkKeywordScrape()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 rounded-xl shadow-lg shadow-purple-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+                            <i class="fas fa-rocket text-xs"></i> Run Bulk Search
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Batch Search Panel -->
                 <div id="panelBatch" class="space-y-6 flex-1 hidden">
                     <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
@@ -381,9 +481,23 @@
 
             <!-- Right Panel - Terminal -->
             <div class="lg:col-span-5 bg-gray-900 p-8 flex flex-col border-l border-gray-800">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex justify-between items-center mb-4">
                     <div class="text-gray-400 text-xs font-mono uppercase tracking-widest">Live Terminal</div>
                     <div id="counter" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-900/30 px-2 py-1 rounded border border-emerald-800">Ready</div>
+                </div>
+                <!-- Progress Bar -->
+                <div id="progressContainer" class="mb-4 hidden">
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span id="progressText">Processing...</span>
+                        <span id="etaText"></span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span id="leadsPerMinute"></span>
+                        <span id="locationProgress"></span>
+                    </div>
                 </div>
                 <div id="consoleOutput" class="flex-1 logs-scroll overflow-y-auto font-mono text-xs space-y-1 pr-2 max-h-[400px]">
                     <div class="text-gray-500">
@@ -484,6 +598,7 @@
         let batchMatchType = 'literal';
         let scrapeMode = 'smart';
         let batchScrapeMode = 'smart';
+        let bulkScrapeMode = 'smart';
         let pollingInterval = null;
         let currentFilename = "";
         let currentTerms = [];
@@ -494,6 +609,7 @@
         let categories = [];
         let searchMode = 'custom';  // 'custom' or 'category'
         let selectedCategory = null;
+        let templates = [];
 
         const countryFlags = {
             'de': '🇩🇪', 'us': '🇺🇸', 'uk': '🇬🇧', 'au': '🇦🇺', 'ru': '🇷🇺',
@@ -508,6 +624,7 @@
             await loadAllSearchTerms();
             await loadCategories();
             await loadBundeslaender();
+            await loadTemplates();
             loadDbStats();
             renderCountryCheckboxes();
             renderConfigDropdown();
@@ -617,6 +734,127 @@
             window.location.href = '/api/db/export';
         }
 
+        // Template functions
+        async function loadTemplates() {
+            try {
+                const res = await fetch('/api/templates');
+                const data = await res.json();
+                if (data.status === 'success') {
+                    templates = data.templates;
+                    renderTemplateDropdown();
+                }
+            } catch (e) {
+                console.error('Failed to load templates', e);
+            }
+        }
+
+        function renderTemplateDropdown() {
+            const select = document.getElementById('templateSelect');
+            select.innerHTML = '<option value="">-- Select a template --</option>';
+            templates.forEach(t => {
+                const terms = t.search_terms || [];
+                const termPreview = terms.slice(0, 2).join(', ') + (terms.length > 2 ? '...' : '');
+                select.innerHTML += `<option value="${t.id}">${t.name} (${terms.length} terms)</option>`;
+            });
+        }
+
+        function loadTemplate() {
+            const select = document.getElementById('templateSelect');
+            const templateId = select.value;
+            const deleteBtn = document.getElementById('deleteTemplateBtn');
+
+            if (!templateId) {
+                deleteBtn.classList.add('hidden');
+                return;
+            }
+
+            deleteBtn.classList.remove('hidden');
+            const template = templates.find(t => t.id === templateId);
+            if (!template) return;
+
+            // Apply template settings
+            if (template.search_terms && template.search_terms.length > 0) {
+                document.getElementById('searchTerm').value = template.search_terms[0];
+            }
+            if (template.country) {
+                document.getElementById('region').value = template.country;
+                onRegionChange();
+            }
+            if (template.scrape_mode) {
+                setScrapeMode(template.scrape_mode);
+            }
+            if (template.min_rating) {
+                document.getElementById('minRating').value = template.min_rating;
+            }
+            if (template.min_reviews) {
+                document.getElementById('minReviews').value = template.min_reviews;
+            }
+            if (template.bundeslaender && template.bundeslaender.length > 0) {
+                selectedBundeslaender = [...template.bundeslaender];
+                renderBundeslandCheckboxes();
+            }
+
+            log(`Loaded template: ${template.name}`, 'system');
+        }
+
+        async function saveCurrentAsTemplate() {
+            const name = prompt('Enter a name for this template:');
+            if (!name) return;
+
+            const searchTerm = document.getElementById('searchTerm').value;
+            const region = document.getElementById('region').value;
+            const minRating = document.getElementById('minRating').value;
+            const minReviews = document.getElementById('minReviews').value;
+
+            const template = {
+                name: name,
+                search_terms: searchTerm ? [searchTerm] : [],
+                country: region,
+                bundeslaender: selectedBundeslaender,
+                scrape_mode: scrapeMode,
+                min_rating: parseFloat(minRating) || 0,
+                min_reviews: parseInt(minReviews) || 0
+            };
+
+            try {
+                const res = await fetch('/api/templates', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(template)
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    await loadTemplates();
+                    log(`Template "${name}" saved!`, 'success');
+                } else {
+                    log('Error saving template: ' + data.message, 'error');
+                }
+            } catch (e) {
+                log('Error saving template', 'error');
+            }
+        }
+
+        async function deleteSelectedTemplate() {
+            const select = document.getElementById('templateSelect');
+            const templateId = select.value;
+            if (!templateId) return;
+
+            const template = templates.find(t => t.id === templateId);
+            if (!confirm(`Delete template "${template?.name}"?`)) return;
+
+            try {
+                const res = await fetch(`/api/templates/${templateId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    await loadTemplates();
+                    document.getElementById('deleteTemplateBtn').classList.add('hidden');
+                    log('Template deleted', 'system');
+                }
+            } catch (e) {
+                log('Error deleting template', 'error');
+            }
+        }
+
         // Category functions
         async function loadCategories() {
             try {
@@ -680,9 +918,11 @@
         // Tab switching
         function switchMainTab(tab) {
             document.getElementById('panelSingle').classList.add('hidden');
+            document.getElementById('panelBulk').classList.add('hidden');
             document.getElementById('panelBatch').classList.add('hidden');
             document.getElementById('panelConfig').classList.add('hidden');
             document.getElementById('tabSingle').classList.remove('active');
+            document.getElementById('tabBulk').classList.remove('active');
             document.getElementById('tabBatch').classList.remove('active');
             document.getElementById('tabConfig').classList.remove('active');
 
@@ -866,6 +1106,75 @@
             document.getElementById('batchMode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('selected');
         }
 
+        function setBulkScrapeMode(mode) {
+            bulkScrapeMode = mode;
+            document.getElementById('bulkModeQuick').classList.remove('selected');
+            document.getElementById('bulkModeSmart').classList.remove('selected');
+            document.getElementById('bulkModeThorough').classList.remove('selected');
+            document.getElementById('bulkMode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('selected');
+        }
+
+        async function startBulkKeywordScrape() {
+            const keywordsText = document.getElementById('bulkKeywords').value.trim();
+            if (!keywordsText) {
+                alert("Please enter at least one keyword");
+                return;
+            }
+
+            const keywords = keywordsText.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+            if (keywords.length === 0) {
+                alert("Please enter at least one keyword");
+                return;
+            }
+
+            const numLeads = document.getElementById('bulkNumLeads').value || 500;
+            const region = document.getElementById('bulkRegion').value;
+            const minRating = parseFloat(document.getElementById('bulkMinRating').value) || 0;
+            const minReviews = parseInt(document.getElementById('bulkMinReviews').value) || 0;
+
+            document.getElementById('consoleOutput').innerHTML = '';
+            document.getElementById('downloadContainer').classList.add('hidden');
+            log(`Starting bulk search with ${keywords.length} keywords in [${region.toUpperCase()}]...`, 'system');
+
+            const runBtn = document.getElementById('bulkRunBtn');
+            runBtn.disabled = true;
+            runBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Processing...`;
+            runBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                const res = await fetch('/run-bulk-keywords', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        keywords: keywords,
+                        num_leads: numLeads,
+                        region: region,
+                        min_rating: minRating,
+                        min_reviews: minReviews,
+                        scrape_mode: bulkScrapeMode
+                    })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    log("Connection established. Starting bulk scan...", 'system');
+                    startPolling();
+                } else {
+                    log("Error: " + data.message, 'error');
+                    resetBulkBtn();
+                }
+            } catch(e) {
+                log("Connection failure to backend.", 'error');
+                resetBulkBtn();
+            }
+        }
+
+        function resetBulkBtn() {
+            const btn = document.getElementById('bulkRunBtn');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fas fa-rocket text-xs"></i> Run Bulk Search`;
+            btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+
         function log(msg, type = 'system') {
             const consoleEl = document.getElementById('consoleOutput');
             if (consoleEl.innerText.includes('waiting for input')) consoleEl.innerHTML = '';
@@ -1015,6 +1324,9 @@
 
         function startPolling(isBatch = false) {
             if(pollingInterval) clearInterval(pollingInterval);
+            // Show progress container
+            document.getElementById('progressContainer').classList.remove('hidden');
+
             pollingInterval = setInterval(async () => {
                 const res = await fetch('/status');
                 const status = await res.json();
@@ -1022,6 +1334,23 @@
                 const counter = document.getElementById('counter');
                 counter.innerText = `${status.total_leads} LEADS`;
                 if (status.total_leads > 0) counter.className = "text-xs font-mono font-bold text-white bg-blue-600 px-2 py-1 rounded shadow-lg shadow-blue-900/50";
+
+                // Update progress bar
+                if (status.total_locations > 0) {
+                    const progress = (status.processed_locations / status.total_locations) * 100;
+                    document.getElementById('progressBar').style.width = `${progress}%`;
+                    document.getElementById('progressText').textContent = status.current_city || 'Processing...';
+                    document.getElementById('locationProgress').textContent = `${status.processed_locations}/${status.total_locations} locations`;
+
+                    if (status.eta_minutes > 0) {
+                        const mins = Math.floor(status.eta_minutes);
+                        document.getElementById('etaText').textContent = `~${mins} min remaining`;
+                    }
+
+                    if (status.leads_per_minute > 0) {
+                        document.getElementById('leadsPerMinute').textContent = `${status.leads_per_minute} leads/min`;
+                    }
+                }
 
                 if (status.new_logs && status.new_logs.length > 0) {
                     status.new_logs.forEach(leadMsg => log(leadMsg, 'success'));
@@ -1032,6 +1361,10 @@
                 if(!status.is_running) {
                     clearInterval(pollingInterval);
                     log("Job Finished.", 'system');
+                    // Hide progress container
+                    document.getElementById('progressContainer').classList.add('hidden');
+                    // Refresh DB stats
+                    loadDbStats();
                     if (isBatch) {
                         resetBatchBtn();
                     } else {
