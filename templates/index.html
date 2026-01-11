@@ -9,7 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { background-color: #F3F4F6; font-family: 'Inter', sans-serif; color: #111827; }
-        
+
         .card-shadow {
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
@@ -24,117 +24,356 @@
         .logs-scroll::-webkit-scrollbar { width: 6px; }
         .logs-scroll::-webkit-scrollbar-track { background: #111827; }
         .logs-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+        .country-checkbox:checked + label { background-color: #EFF6FF; border-color: #2563EB; }
+        .tag { display: inline-flex; align-items: center; gap: 4px; background-color: #E5E7EB; padding: 4px 10px; border-radius: 9999px; font-size: 12px; }
+        .tag-remove { cursor: pointer; opacity: 0.6; }
+        .tag-remove:hover { opacity: 1; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-10 px-6">
 
-    <div class="bg-white rounded-2xl card-shadow w-full max-w-5xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[600px] mb-8">
-        
-        <div class="lg:col-span-7 p-8 flex flex-col">
-            <div class="flex justify-between items-center mb-8">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                        <i class="fas fa-bolt text-lg"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold tracking-tight text-gray-900">LeadGen Master</h1>
-                        <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Professional Suite</p>
-                    </div>
+    <div class="bg-white rounded-2xl card-shadow w-full max-w-6xl overflow-hidden min-h-[600px] mb-8">
+
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                    <i class="fas fa-bolt text-lg"></i>
                 </div>
-                <div class="bg-green-50 text-green-700 text-[10px] font-bold px-3 py-1.5 rounded-full border border-green-100 flex items-center gap-2">
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-gray-900">LeadGen Master</h1>
+                    <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Professional Suite</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="statusIndicator" class="bg-green-50 text-green-700 text-[10px] font-bold px-3 py-1.5 rounded-full border border-green-100 flex items-center gap-2">
                     <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
                     System Active
                 </div>
             </div>
+        </div>
 
-            <div class="flex border-b border-gray-100 mb-8 gap-6">
-                <button class="tab-btn active pb-3 text-sm flex items-center gap-2"><i class="fas fa-map-marked-alt"></i> Google Maps</button>
-                <button class="tab-btn pb-3 text-sm flex items-center gap-2 opacity-40 cursor-not-allowed"><i class="fab fa-google"></i> Google Search</button>
-            </div>
+        <!-- Main Tabs -->
+        <div class="flex border-b border-gray-100 px-6 gap-6">
+            <button onclick="switchMainTab('single')" id="tabSingle" class="tab-btn active py-4 text-sm flex items-center gap-2">
+                <i class="fas fa-search"></i> Single Search
+            </button>
+            <button onclick="switchMainTab('batch')" id="tabBatch" class="tab-btn py-4 text-sm flex items-center gap-2">
+                <i class="fas fa-layer-group"></i> Batch Search
+            </button>
+            <button onclick="switchMainTab('config')" id="tabConfig" class="tab-btn py-4 text-sm flex items-center gap-2">
+                <i class="fas fa-cog"></i> Configure Countries
+            </button>
+        </div>
 
-            <div class="space-y-6 flex-1">
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Niche / Keyword</label>
-                    <div class="relative group">
-                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                        <input type="text" id="searchTerm" placeholder="e.g. Marketing Agencies, Dentists..." class="custom-input w-full pl-11 pr-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+        <div class="grid grid-cols-1 lg:grid-cols-12">
+
+            <!-- Left Panel - Controls -->
+            <div class="lg:col-span-7 p-8 flex flex-col">
+
+                <!-- Single Search Panel -->
+                <div id="panelSingle" class="space-y-6 flex-1">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Niche / Keyword</label>
+                        <div class="relative group">
+                            <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            <input type="text" id="searchTerm" placeholder="e.g. Marketing Agencies, Dentists..." class="custom-input w-full pl-11 pr-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Max Leads</label>
+                            <input type="number" id="numLeads" value="50" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Region</label>
+                            <div class="relative">
+                                <select id="region" onchange="onRegionChange()" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium appearance-none cursor-pointer">
+                                    <option value="de">Germany</option>
+                                    <option value="us">USA</option>
+                                    <option value="uk">UK</option>
+                                    <option value="au">Australia</option>
+                                    <option value="ru">Russia</option>
+                                    <option value="cn">China</option>
+                                    <option value="ca">Canada</option>
+                                    <option value="fr">France</option>
+                                    <option value="es">Spain</option>
+                                    <option value="it">Italy</option>
+                                    <option value="br">Brazil</option>
+                                    <option value="in">India</option>
+                                    <option value="jp">Japan</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-4 top-4 text-gray-400 text-xs pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bundesland Selector (Germany only) -->
+                    <div id="bundeslandContainer" class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Filter by Bundesland (optional)</label>
+                            <button onclick="clearBundeslaender()" class="text-xs text-gray-500 hover:text-blue-600">Clear all</button>
+                        </div>
+                        <div id="bundeslandCheckboxes" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                            <!-- Populated by JS -->
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-2">Leave empty to scrape all of Germany</p>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Match Precision</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div id="cardLiteral" class="precision-card selected bg-white rounded-xl p-4 cursor-pointer flex flex-col justify-center" onclick="setMatchType('literal')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-bold text-gray-800">Literal Match</span>
+                                    <i class="fas fa-quote-right text-blue-500 opacity-50 text-xs"></i>
+                                </div>
+                                <span class="text-[10px] text-gray-400">Exact phrase match only</span>
+                            </div>
+                            <div id="cardRough" class="precision-card bg-white rounded-xl p-4 cursor-pointer flex flex-col justify-center" onclick="setMatchType('rough')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-bold text-gray-800">Rough Match</span>
+                                    <i class="fas fa-project-diagram text-gray-400 opacity-50 text-xs"></i>
+                                </div>
+                                <span class="text-[10px] text-gray-400">Broad semantic search</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scrape Mode & Quality Filters -->
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Scrape Settings</label>
+
+                        <!-- Scrape Mode -->
+                        <div class="mb-4">
+                            <label class="text-xs text-gray-600 mb-2 block">Scrape Mode (Germany optimized)</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div id="modeQuick" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setScrapeMode('quick')">
+                                    <div class="text-sm font-bold text-gray-800">Quick</div>
+                                    <div class="text-[10px] text-gray-400">240 cities (50k+)</div>
+                                </div>
+                                <div id="modeSmart" class="precision-card selected bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setScrapeMode('smart')">
+                                    <div class="text-sm font-bold text-gray-800">Smart</div>
+                                    <div class="text-[10px] text-gray-400">1,700 cities (10k+)</div>
+                                </div>
+                                <div id="modeThorough" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setScrapeMode('thorough')">
+                                    <div class="text-sm font-bold text-gray-800">Thorough</div>
+                                    <div class="text-[10px] text-gray-400">2,900 cities (5k+)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-600 mb-1 block">Min Rating</label>
+                                <select id="minRating" class="custom-input w-full px-3 py-2 rounded-lg text-sm">
+                                    <option value="0">Any rating</option>
+                                    <option value="3">3+ stars</option>
+                                    <option value="3.5">3.5+ stars</option>
+                                    <option value="4">4+ stars</option>
+                                    <option value="4.5">4.5+ stars</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 mb-1 block">Min Reviews</label>
+                                <select id="minReviews" class="custom-input w-full px-3 py-2 rounded-lg text-sm">
+                                    <option value="0">Any</option>
+                                    <option value="5">5+ reviews</option>
+                                    <option value="10">10+ reviews</option>
+                                    <option value="25">25+ reviews</option>
+                                    <option value="50">50+ reviews</option>
+                                    <option value="100">100+ reviews</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+                            <i class="fas fa-play text-xs"></i> Generate Leads
+                        </button>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-5">
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Max Leads</label>
-                        <input type="number" id="numLeads" value="50" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+
+                <!-- Batch Search Panel -->
+                <div id="panelBatch" class="space-y-6 flex-1 hidden">
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Batch search runs through all selected countries using their configured search terms. Configure search terms in the "Configure Countries" tab first.
                     </div>
+
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Region</label>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Select Countries to Scrape</label>
+                        <div id="countryCheckboxes" class="grid grid-cols-2 gap-3">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Max Leads Per Search Term</label>
+                        <input type="number" id="batchNumLeads" value="100" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Match Precision</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div id="batchCardLiteral" class="precision-card selected bg-white rounded-xl p-4 cursor-pointer flex flex-col justify-center" onclick="setBatchMatchType('literal')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-bold text-gray-800">Literal Match</span>
+                                    <i class="fas fa-quote-right text-blue-500 opacity-50 text-xs"></i>
+                                </div>
+                                <span class="text-[10px] text-gray-400">Exact phrase match only</span>
+                            </div>
+                            <div id="batchCardRough" class="precision-card bg-white rounded-xl p-4 cursor-pointer flex flex-col justify-center" onclick="setBatchMatchType('rough')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-bold text-gray-800">Rough Match</span>
+                                    <i class="fas fa-project-diagram text-gray-400 opacity-50 text-xs"></i>
+                                </div>
+                                <span class="text-[10px] text-gray-400">Broad semantic search</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scrape Mode & Quality Filters for Batch -->
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Scrape Settings</label>
+
+                        <!-- Scrape Mode -->
+                        <div class="mb-4">
+                            <label class="text-xs text-gray-600 mb-2 block">Scrape Mode</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div id="batchModeQuick" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setBatchScrapeMode('quick')">
+                                    <div class="text-sm font-bold text-gray-800">Quick</div>
+                                    <div class="text-[10px] text-gray-400">Major cities</div>
+                                </div>
+                                <div id="batchModeSmart" class="precision-card selected bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setBatchScrapeMode('smart')">
+                                    <div class="text-sm font-bold text-gray-800">Smart</div>
+                                    <div class="text-[10px] text-gray-400">Balanced</div>
+                                </div>
+                                <div id="batchModeThorough" class="precision-card bg-white rounded-lg p-3 cursor-pointer text-center" onclick="setBatchScrapeMode('thorough')">
+                                    <div class="text-sm font-bold text-gray-800">Thorough</div>
+                                    <div class="text-[10px] text-gray-400">Max coverage</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-600 mb-1 block">Min Rating</label>
+                                <select id="batchMinRating" class="custom-input w-full px-3 py-2 rounded-lg text-sm">
+                                    <option value="0">Any rating</option>
+                                    <option value="3">3+ stars</option>
+                                    <option value="3.5">3.5+ stars</option>
+                                    <option value="4">4+ stars</option>
+                                    <option value="4.5">4.5+ stars</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 mb-1 block">Min Reviews</label>
+                                <select id="batchMinReviews" class="custom-input w-full px-3 py-2 rounded-lg text-sm">
+                                    <option value="0">Any</option>
+                                    <option value="5">5+ reviews</option>
+                                    <option value="10">10+ reviews</option>
+                                    <option value="25">25+ reviews</option>
+                                    <option value="50">50+ reviews</option>
+                                    <option value="100">100+ reviews</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-100 flex gap-3">
+                        <button id="batchRunBtn" onclick="startBatchScrape()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+                            <i class="fas fa-play text-xs"></i> Start Batch Scrape
+                        </button>
+                        <button onclick="stopScrape()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-stop text-xs"></i> Stop
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Config Panel -->
+                <div id="panelConfig" class="space-y-6 flex-1 hidden">
+                    <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-800">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        Configure search terms for each country. These will be used during batch scraping.
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Select Country</label>
                         <div class="relative">
-                            <select id="region" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium appearance-none cursor-pointer">
-                                <option value="de">🇩🇪 Germany</option>
-                                <option value="us">🇺🇸 USA</option>
-                                <option value="uk">🇬🇧 UK</option>
-                                <option value="au">🇦🇺 Australia</option>
-                                <option value="ru">🇷🇺 Russia</option>
-                                <option value="cn">🇨🇳 China</option>
-                                <option value="ca">🇨🇦 Canada</option>
-                                <option value="fr">🇫🇷 France</option>
-                                <option value="es">🇪🇸 Spain</option>
-                                <option value="it">🇮🇹 Italy</option>
-                                <option value="br">🇧🇷 Brazil</option>
-                                <option value="in">🇮🇳 India</option>
-                                <option value="jp">🇯🇵 Japan</option>
+                            <select id="configCountry" onchange="loadCountryTerms()" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium appearance-none cursor-pointer">
+                                <!-- Populated by JS -->
                             </select>
                             <i class="fas fa-chevron-down absolute right-4 top-4 text-gray-400 text-xs pointer-events-none"></i>
                         </div>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Match Precision</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div id="cardLiteral" class="precision-card selected bg-white rounded-xl p-4 cursor-pointer flex flex-col justify-center" onclick="setMatchType('literal')">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-sm font-bold text-gray-800">Literal Match</span>
-                                <i class="fas fa-quote-right text-blue-500 opacity-50 text-xs"></i>
-                            </div>
-                            <span class="text-[10px] text-gray-400">Exact phrase match only</span>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Search Terms for <span id="selectedCountryName">-</span></label>
+                        <div id="termsTags" class="flex flex-wrap gap-2 mb-3 min-h-[40px] p-3 bg-gray-50 rounded-xl border border-gray-200">
+                            <span class="text-gray-400 text-sm">No search terms configured</span>
                         </div>
-                        <div id="cardRough" class="precision-card bg-white rounded-xl p-4 cursor-pointer flex flex-col justify-center" onclick="setMatchType('rough')">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-sm font-bold text-gray-800">Rough Match</span>
-                                <i class="fas fa-project-diagram text-gray-400 opacity-50 text-xs"></i>
-                            </div>
-                            <span class="text-[10px] text-gray-400">Broad semantic search</span>
+                        <div class="flex gap-2">
+                            <input type="text" id="newTerm" placeholder="Add a search term..." class="custom-input flex-1 px-4 py-3 rounded-xl text-sm text-gray-700 font-medium" onkeypress="if(event.key==='Enter')addTerm()">
+                            <button onclick="addTerm()" class="bg-gray-800 hover:bg-gray-700 text-white font-semibold px-6 py-3 rounded-xl transition-all flex items-center gap-2">
+                                <i class="fas fa-plus text-xs"></i> Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button onclick="saveTerms()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-xl shadow-lg shadow-green-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+                            <i class="fas fa-save text-xs"></i> Save Configuration
+                        </button>
+                    </div>
+
+                    <!-- Show all configured countries -->
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Configuration Overview</label>
+                        <div id="configOverview" class="space-y-2 max-h-48 overflow-y-auto">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8 pt-6 border-t border-gray-100">
-                <button id="runBtn" onclick="startScrape()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
-                    <i class="fas fa-play text-xs"></i> Generate Leads
-                </button>
-            </div>
-        </div>
-
-        <div class="lg:col-span-5 bg-gray-900 p-8 flex flex-col border-l border-gray-800">
-            <div class="flex justify-between items-center mb-6">
-                <div class="text-gray-400 text-xs font-mono uppercase tracking-widest">Live Terminal</div>
-                <div id="counter" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-900/30 px-2 py-1 rounded border border-emerald-800">Ready</div>
-            </div>
-            <div id="consoleOutput" class="flex-1 logs-scroll overflow-y-auto font-mono text-xs space-y-3 pr-2">
-                <div class="text-gray-500">
-                    <span class="text-blue-500">user@leadgen:~$</span> initializing system...<br>
-                    <span class="text-blue-500">user@leadgen:~$</span> waiting for input...
+            <!-- Right Panel - Terminal -->
+            <div class="lg:col-span-5 bg-gray-900 p-8 flex flex-col border-l border-gray-800">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="text-gray-400 text-xs font-mono uppercase tracking-widest">Live Terminal</div>
+                    <div id="counter" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-900/30 px-2 py-1 rounded border border-emerald-800">Ready</div>
                 </div>
-            </div>
-            <div id="downloadContainer" class="mt-6 pt-6 border-t border-gray-800 hidden">
-                <button id="downloadBtn" onclick="" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-2">
-                    <i class="fas fa-download"></i> Download CSV Results
-                </button>
+                <div id="consoleOutput" class="flex-1 logs-scroll overflow-y-auto font-mono text-xs space-y-1 pr-2 max-h-[400px]">
+                    <div class="text-gray-500">
+                        <span class="text-blue-500">user@leadgen:~$</span> initializing system...<br>
+                        <span class="text-blue-500">user@leadgen:~$</span> waiting for input...
+                    </div>
+                </div>
+                <div id="downloadContainer" class="mt-6 pt-6 border-t border-gray-800 hidden">
+                    <div class="text-gray-400 text-xs mb-3 uppercase tracking-wider">Download Options</div>
+                    <div class="space-y-2">
+                        <button id="downloadBtn" onclick="" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                            <i class="fas fa-download"></i> Download All
+                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="downloadWebsiteBtn" onclick="" class="bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition-all flex items-center justify-center gap-1 text-xs">
+                                <i class="fas fa-globe"></i> With Website
+                            </button>
+                            <button id="downloadPhoneBtn" onclick="" class="bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 rounded-lg transition-all flex items-center justify-center gap-1 text-xs">
+                                <i class="fas fa-phone"></i> With Phone
+                            </button>
+                        </div>
+                        <button id="downloadBothBtn" onclick="" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium py-2 rounded-lg transition-all flex items-center justify-center gap-1 text-xs">
+                            <i class="fas fa-filter"></i> With Website + Phone
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="w-full max-w-5xl">
+    <!-- History Table -->
+    <div class="w-full max-w-6xl">
         <div class="bg-white rounded-xl card-shadow overflow-hidden border border-gray-100">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                 <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Previous Searches</h3>
@@ -162,29 +401,271 @@
     </div>
 
     <script>
+        // State
         let matchType = 'literal';
+        let batchMatchType = 'literal';
+        let scrapeMode = 'smart';
+        let batchScrapeMode = 'smart';
         let pollingInterval = null;
         let currentFilename = "";
+        let currentTerms = [];
+        let allSearchTerms = {};
+        let countries = [];
+        let bundeslaender = [];
+        let selectedBundeslaender = [];
+
+        const countryFlags = {
+            'de': '🇩🇪', 'us': '🇺🇸', 'uk': '🇬🇧', 'au': '🇦🇺', 'ru': '🇷🇺',
+            'cn': '🇨🇳', 'ca': '🇨🇦', 'fr': '🇫🇷', 'es': '🇪🇸', 'it': '🇮🇹',
+            'br': '🇧🇷', 'in': '🇮🇳', 'jp': '🇯🇵'
+        };
 
         // Initialize
-        window.onload = loadHistory;
+        window.onload = async function() {
+            loadHistory();
+            await loadCountries();
+            await loadAllSearchTerms();
+            await loadBundeslaender();
+            renderCountryCheckboxes();
+            renderConfigDropdown();
+            loadCountryTerms();
+            renderConfigOverview();
+            renderBundeslandCheckboxes();
+            onRegionChange(); // Set initial visibility
+        };
+
+        async function loadBundeslaender() {
+            try {
+                const res = await fetch('/bundeslaender');
+                bundeslaender = await res.json();
+            } catch (e) {
+                console.error('Failed to load Bundeslaender', e);
+            }
+        }
+
+        function renderBundeslandCheckboxes() {
+            const container = document.getElementById('bundeslandCheckboxes');
+            container.innerHTML = '';
+            bundeslaender.forEach(bl => {
+                container.innerHTML += `
+                    <div class="flex items-center">
+                        <input type="checkbox" id="bl_${bl.code}" value="${bl.code}"
+                               class="bundesland-checkbox hidden peer"
+                               onchange="toggleBundesland('${bl.code}')">
+                        <label for="bl_${bl.code}"
+                               class="flex-1 p-2 rounded-lg border border-gray-200 cursor-pointer transition-all text-xs
+                                      hover:border-blue-300 peer-checked:bg-blue-50 peer-checked:border-blue-500">
+                            <span class="font-medium text-gray-700">${bl.name}</span>
+                        </label>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleBundesland(code) {
+            const idx = selectedBundeslaender.indexOf(code);
+            if (idx > -1) {
+                selectedBundeslaender.splice(idx, 1);
+            } else {
+                selectedBundeslaender.push(code);
+            }
+        }
+
+        function clearBundeslaender() {
+            selectedBundeslaender = [];
+            document.querySelectorAll('.bundesland-checkbox').forEach(cb => cb.checked = false);
+        }
+
+        function onRegionChange() {
+            const region = document.getElementById('region').value;
+            const container = document.getElementById('bundeslandContainer');
+            if (region === 'de') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                clearBundeslaender();
+            }
+        }
+
+        // Tab switching
+        function switchMainTab(tab) {
+            document.getElementById('panelSingle').classList.add('hidden');
+            document.getElementById('panelBatch').classList.add('hidden');
+            document.getElementById('panelConfig').classList.add('hidden');
+            document.getElementById('tabSingle').classList.remove('active');
+            document.getElementById('tabBatch').classList.remove('active');
+            document.getElementById('tabConfig').classList.remove('active');
+
+            document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+        }
+
+        async function loadCountries() {
+            try {
+                const res = await fetch('/countries');
+                countries = await res.json();
+            } catch (e) {
+                console.error('Failed to load countries', e);
+            }
+        }
+
+        async function loadAllSearchTerms() {
+            try {
+                const res = await fetch('/search-terms');
+                allSearchTerms = await res.json();
+            } catch (e) {
+                console.error('Failed to load search terms', e);
+            }
+        }
+
+        function renderCountryCheckboxes() {
+            const container = document.getElementById('countryCheckboxes');
+            container.innerHTML = '';
+            countries.forEach(c => {
+                const terms = allSearchTerms[c.code] || [];
+                const termCount = terms.length;
+                const disabled = !c.has_cities || termCount === 0;
+                container.innerHTML += `
+                    <div class="flex items-center">
+                        <input type="checkbox" id="batch_${c.code}" value="${c.code}" class="country-checkbox hidden peer" ${disabled ? 'disabled' : ''}>
+                        <label for="batch_${c.code}" class="flex-1 p-3 rounded-lg border border-gray-200 cursor-pointer transition-all ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:border-blue-300'} peer-checked:bg-blue-50 peer-checked:border-blue-500">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-gray-700">${countryFlags[c.code] || ''} ${c.name}</span>
+                                <span class="text-xs ${termCount > 0 ? 'text-green-600' : 'text-gray-400'}">${termCount} terms</span>
+                            </div>
+                        </label>
+                    </div>
+                `;
+            });
+        }
+
+        function renderConfigDropdown() {
+            const select = document.getElementById('configCountry');
+            select.innerHTML = '';
+            countries.forEach(c => {
+                select.innerHTML += `<option value="${c.code}">${countryFlags[c.code] || ''} ${c.name}</option>`;
+            });
+        }
+
+        function loadCountryTerms() {
+            const country = document.getElementById('configCountry').value;
+            const countryData = countries.find(c => c.code === country);
+            document.getElementById('selectedCountryName').textContent = countryData ? countryData.name : country.toUpperCase();
+            currentTerms = allSearchTerms[country] || [];
+            renderTermsTags();
+        }
+
+        function renderTermsTags() {
+            const container = document.getElementById('termsTags');
+            if (currentTerms.length === 0) {
+                container.innerHTML = '<span class="text-gray-400 text-sm">No search terms configured</span>';
+                return;
+            }
+            container.innerHTML = currentTerms.map((term, idx) => `
+                <span class="tag">
+                    ${term}
+                    <i class="fas fa-times tag-remove" onclick="removeTerm(${idx})"></i>
+                </span>
+            `).join('');
+        }
+
+        function addTerm() {
+            const input = document.getElementById('newTerm');
+            const term = input.value.trim();
+            if (term && !currentTerms.includes(term)) {
+                currentTerms.push(term);
+                renderTermsTags();
+                input.value = '';
+            }
+        }
+
+        function removeTerm(idx) {
+            currentTerms.splice(idx, 1);
+            renderTermsTags();
+        }
+
+        async function saveTerms() {
+            const country = document.getElementById('configCountry').value;
+            try {
+                const res = await fetch(`/search-terms/${country}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ terms: currentTerms })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    allSearchTerms[country] = currentTerms;
+                    renderCountryCheckboxes();
+                    renderConfigOverview();
+                    log(`Saved ${currentTerms.length} search terms for ${country.toUpperCase()}`, 'system');
+                }
+            } catch (e) {
+                log('Failed to save terms', 'error');
+            }
+        }
+
+        function renderConfigOverview() {
+            const container = document.getElementById('configOverview');
+            container.innerHTML = '';
+            countries.forEach(c => {
+                const terms = allSearchTerms[c.code] || [];
+                if (terms.length > 0) {
+                    container.innerHTML += `
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-medium text-gray-700 text-sm">${countryFlags[c.code] || ''} ${c.name}</span>
+                                <span class="text-xs text-green-600">${terms.length} terms</span>
+                            </div>
+                            <div class="text-xs text-gray-500 truncate">${terms.join(', ')}</div>
+                        </div>
+                    `;
+                }
+            });
+            if (container.innerHTML === '') {
+                container.innerHTML = '<div class="text-gray-400 text-sm text-center py-4">No countries configured yet</div>';
+            }
+        }
 
         function setMatchType(type) {
             matchType = type;
             const cardLiteral = document.getElementById('cardLiteral');
             const cardRough = document.getElementById('cardRough');
-
             if (type === 'literal') {
                 cardLiteral.classList.add('selected');
                 cardRough.classList.remove('selected');
-                cardLiteral.querySelector('i').className = "fas fa-quote-right text-blue-500 opacity-100 text-xs";
-                cardRough.querySelector('i').className = "fas fa-project-diagram text-gray-400 opacity-50 text-xs";
             } else {
                 cardRough.classList.add('selected');
                 cardLiteral.classList.remove('selected');
-                cardRough.querySelector('i').className = "fas fa-project-diagram text-blue-500 opacity-100 text-xs";
-                cardLiteral.querySelector('i').className = "fas fa-quote-right text-gray-400 opacity-50 text-xs";
             }
+        }
+
+        function setBatchMatchType(type) {
+            batchMatchType = type;
+            const cardLiteral = document.getElementById('batchCardLiteral');
+            const cardRough = document.getElementById('batchCardRough');
+            if (type === 'literal') {
+                cardLiteral.classList.add('selected');
+                cardRough.classList.remove('selected');
+            } else {
+                cardRough.classList.add('selected');
+                cardLiteral.classList.remove('selected');
+            }
+        }
+
+        function setScrapeMode(mode) {
+            scrapeMode = mode;
+            document.getElementById('modeQuick').classList.remove('selected');
+            document.getElementById('modeSmart').classList.remove('selected');
+            document.getElementById('modeThorough').classList.remove('selected');
+            document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('selected');
+        }
+
+        function setBatchScrapeMode(mode) {
+            batchScrapeMode = mode;
+            document.getElementById('batchModeQuick').classList.remove('selected');
+            document.getElementById('batchModeSmart').classList.remove('selected');
+            document.getElementById('batchModeThorough').classList.remove('selected');
+            document.getElementById('batchMode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('selected');
         }
 
         function log(msg, type = 'system') {
@@ -192,9 +673,9 @@
             if (consoleEl.innerText.includes('waiting for input')) consoleEl.innerHTML = '';
             const line = document.createElement('div');
             if (type === 'success') {
-                line.innerHTML = `<div class="flex gap-2"><span class="text-emerald-500">➜</span><span class="text-gray-300">${msg}</span></div>`;
+                line.innerHTML = `<div class="flex gap-2"><span class="text-emerald-500">+</span><span class="text-gray-300">${msg}</span></div>`;
             } else if (type === 'error') {
-                line.innerHTML = `<div class="flex gap-2"><span class="text-red-500">✖</span><span class="text-red-400">${msg}</span></div>`;
+                line.innerHTML = `<div class="flex gap-2"><span class="text-red-500">x</span><span class="text-red-400">${msg}</span></div>`;
             } else {
                 line.innerHTML = `<div class="flex gap-2 mt-2 mb-1"><span class="text-blue-500 font-bold">INFO:</span><span class="text-gray-400">${msg}</span></div>`;
             }
@@ -207,12 +688,16 @@
             const leads = document.getElementById('numLeads').value;
             const region = document.getElementById('region').value;
 
+            // Get filter values
+            const minRating = parseFloat(document.getElementById('minRating').value) || 0;
+            const minReviews = parseInt(document.getElementById('minReviews').value) || 0;
+
             if(!term) { alert("Please enter a keyword"); return; }
 
             document.getElementById('consoleOutput').innerHTML = '';
             document.getElementById('downloadContainer').classList.add('hidden');
             log(`Initializing job for: "${term}" in [${region.toUpperCase()}]...`, 'system');
-            
+
             const runBtn = document.getElementById('runBtn');
             runBtn.disabled = true;
             runBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Processing...`;
@@ -222,7 +707,17 @@
                 const res = await fetch('/run-scrape', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ source: 'maps', search_term: term, num_leads: leads, match_type: matchType, region: region })
+                    body: JSON.stringify({
+                        source: 'maps',
+                        search_term: term,
+                        num_leads: leads,
+                        match_type: matchType,
+                        region: region,
+                        min_rating: minRating,
+                        min_reviews: minReviews,
+                        scrape_mode: scrapeMode,
+                        bundeslaender: region === 'de' ? selectedBundeslaender : []
+                    })
                 });
                 const data = await res.json();
                 if(data.status === 'success') {
@@ -238,12 +733,71 @@
             }
         }
 
-        function startPolling() {
+        async function startBatchScrape() {
+            const checkboxes = document.querySelectorAll('#countryCheckboxes input[type="checkbox"]:checked');
+            const selectedCountries = Array.from(checkboxes).map(cb => cb.value);
+            const numLeads = document.getElementById('batchNumLeads').value;
+
+            // Get filter values for batch
+            const minRating = parseFloat(document.getElementById('batchMinRating').value) || 0;
+            const minReviews = parseInt(document.getElementById('batchMinReviews').value) || 0;
+
+            if (selectedCountries.length === 0) {
+                alert("Please select at least one country");
+                return;
+            }
+
+            document.getElementById('consoleOutput').innerHTML = '';
+            document.getElementById('downloadContainer').classList.add('hidden');
+            log(`Starting batch scrape for ${selectedCountries.length} countries...`, 'system');
+
+            const runBtn = document.getElementById('batchRunBtn');
+            runBtn.disabled = true;
+            runBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Processing...`;
+            runBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                const res = await fetch('/run-batch-scrape', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        countries: selectedCountries,
+                        num_leads_per_term: numLeads,
+                        match_type: batchMatchType,
+                        min_rating: minRating,
+                        min_reviews: minReviews,
+                        scrape_mode: batchScrapeMode
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    log("Batch job started...", 'system');
+                    startPolling(true);
+                } else {
+                    log("Error: " + data.message, 'error');
+                    resetBatchBtn();
+                }
+            } catch (e) {
+                log("Connection failure to backend.", 'error');
+                resetBatchBtn();
+            }
+        }
+
+        async function stopScrape() {
+            try {
+                await fetch('/stop', { method: 'POST' });
+                log("Stop signal sent...", 'system');
+            } catch (e) {
+                log("Failed to send stop signal", 'error');
+            }
+        }
+
+        function startPolling(isBatch = false) {
             if(pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(async () => {
                 const res = await fetch('/status');
                 const status = await res.json();
-                
+
                 const counter = document.getElementById('counter');
                 counter.innerText = `${status.total_leads} LEADS`;
                 if (status.total_leads > 0) counter.className = "text-xs font-mono font-bold text-white bg-blue-600 px-2 py-1 rounded shadow-lg shadow-blue-900/50";
@@ -251,21 +805,35 @@
                 if (status.new_logs && status.new_logs.length > 0) {
                     status.new_logs.forEach(leadMsg => log(leadMsg, 'success'));
                 }
-                
-                // Keep track of the current file being generated
+
                 if(status.current_filename) currentFilename = status.current_filename;
 
                 if(!status.is_running) {
                     clearInterval(pollingInterval);
                     log("Job Finished.", 'system');
-                    resetBtn();
-                    loadHistory(); // Refresh history table
+                    if (isBatch) {
+                        resetBatchBtn();
+                    } else {
+                        resetBtn();
+                    }
+                    loadHistory();
                     if(status.total_leads > 0) {
                         const dlContainer = document.getElementById('downloadContainer');
-                        const dlBtn = document.getElementById('downloadBtn');
                         dlContainer.classList.remove('hidden');
-                        // Update download button to point to specific file
-                        dlBtn.onclick = function() { window.location.href = `/download/${currentFilename}`; };
+
+                        // Set up download buttons
+                        document.getElementById('downloadBtn').onclick = function() {
+                            window.location.href = `/download/${currentFilename}`;
+                        };
+                        document.getElementById('downloadWebsiteBtn').onclick = function() {
+                            window.location.href = `/download/${currentFilename}?filter=website`;
+                        };
+                        document.getElementById('downloadPhoneBtn').onclick = function() {
+                            window.location.href = `/download/${currentFilename}?filter=phone`;
+                        };
+                        document.getElementById('downloadBothBtn').onclick = function() {
+                            window.location.href = `/download/${currentFilename}?filter=both`;
+                        };
                     }
                 }
             }, 2000);
@@ -275,6 +843,13 @@
             const runBtn = document.getElementById('runBtn');
             runBtn.disabled = false;
             runBtn.innerHTML = `<i class="fas fa-play text-xs"></i> Generate Leads`;
+            runBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+
+        function resetBatchBtn() {
+            const runBtn = document.getElementById('batchRunBtn');
+            runBtn.disabled = false;
+            runBtn.innerHTML = `<i class="fas fa-play text-xs"></i> Start Batch Scrape`;
             runBtn.classList.remove('opacity-75', 'cursor-not-allowed');
         }
 
