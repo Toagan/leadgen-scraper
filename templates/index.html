@@ -91,16 +91,12 @@
                             <input type="text" id="searchTerm" placeholder="e.g. Marketing Agencies, Dentists..." class="custom-input w-full pl-11 pr-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
                         </div>
                         <!-- Expand Queries Option -->
-                        <div id="expandQueriesContainer" class="mt-2 flex items-center gap-2 flex-wrap">
+                        <div id="expandQueriesContainer" class="mt-2 flex items-center gap-2">
                             <label class="flex items-center gap-2 cursor-pointer bg-white border border-gray-200 rounded-lg px-3 py-2 hover:border-green-300 transition-all">
                                 <input type="checkbox" id="expandQueries" class="w-4 h-4 accent-green-500">
                                 <span class="text-xs font-medium text-gray-600">Expand queries</span>
                                 <span class="text-[10px] text-gray-400">(+German translations)</span>
                             </label>
-                            <button type="button" onclick="showAIPromptModal()" class="flex items-center gap-1.5 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 hover:border-purple-400 hover:bg-purple-100 transition-all">
-                                <i class="fas fa-magic text-purple-500 text-xs"></i>
-                                <span class="text-xs font-medium text-purple-700">Get AI Suggestions</span>
-                            </button>
                         </div>
                     </div>
 
@@ -446,48 +442,6 @@
         </div>
     </div>
 
-    <!-- AI Prompt Modal -->
-    <div id="aiPromptModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-magic text-white text-lg"></i>
-                        <h3 class="text-lg font-bold text-white">AI Keyword Expansion</h3>
-                    </div>
-                    <button onclick="closeAIPromptModal()" class="text-white/80 hover:text-white transition-colors">
-                        <i class="fas fa-times text-lg"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="p-6">
-                <p class="text-sm text-gray-600 mb-4">Copy this prompt and paste it into ChatGPT to get keyword variations for better coverage:</p>
-                <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 mb-4">
-                    <pre id="aiPromptText" class="text-sm text-gray-700 whitespace-pre-wrap font-mono leading-relaxed"></pre>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="copyAIPrompt()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
-                        <i class="fas fa-copy"></i> Copy Prompt
-                    </button>
-                    <a href="https://chat.openai.com" target="_blank" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
-                        <i class="fas fa-external-link-alt"></i> Open ChatGPT
-                    </a>
-                </div>
-                <div id="copySuccess" class="hidden mt-3 text-center text-sm text-green-600 font-medium">
-                    <i class="fas fa-check-circle"></i> Prompt copied to clipboard!
-                </div>
-                <div class="mt-6 pt-4 border-t border-gray-200">
-                    <p class="text-xs text-gray-500 mb-2"><strong>Tip:</strong> After getting suggestions from ChatGPT, you can:</p>
-                    <ul class="text-xs text-gray-500 list-disc list-inside space-y-1">
-                        <li>Run multiple searches with different keywords</li>
-                        <li>Use the batch search feature with multiple terms</li>
-                        <li>Add the terms to your country-specific search terms config</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         // State
         let matchType = 'literal';
@@ -654,94 +608,6 @@
                 info.classList.add('hidden');
             }
         }
-
-        // AI Prompt Modal functions
-        function showAIPromptModal() {
-            const keyword = document.getElementById('searchTerm').value.trim();
-            const region = document.getElementById('region').value;
-            const regionNames = {
-                'de': 'Germany', 'us': 'USA', 'uk': 'United Kingdom', 'au': 'Australia',
-                'ru': 'Russia', 'cn': 'China', 'ca': 'Canada', 'fr': 'France',
-                'es': 'Spain', 'it': 'Italy', 'br': 'Brazil', 'in': 'India', 'jp': 'Japan'
-            };
-            const regionName = regionNames[region] || region.toUpperCase();
-
-            const prompt = generateAIPrompt(keyword, region, regionName);
-            document.getElementById('aiPromptText').textContent = prompt;
-            document.getElementById('copySuccess').classList.add('hidden');
-
-            const modal = document.getElementById('aiPromptModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeAIPromptModal() {
-            const modal = document.getElementById('aiPromptModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function generateAIPrompt(keyword, regionCode, regionName) {
-            const keywordPart = keyword ? `"${keyword}"` : '[YOUR KEYWORD]';
-
-            let prompt = `I'm searching for businesses on Google Maps in ${regionName}. My base search term is ${keywordPart}.
-
-Please help me maximize my search coverage by providing:
-
-1. **Synonyms & Variations** (5-10 terms)
-   - Alternative ways people might search for this type of business
-   - Include both formal and informal terms
-
-2. **German Translations** (if applicable for ${regionName})
-   - Direct translations
-   - Common German terms used for this business type
-   - Regional variations if any
-
-3. **Related Business Types** (3-5 terms)
-   - Businesses that often provide similar services
-   - Specialized subcategories
-
-4. **Long-tail Variations** (3-5 terms)
-   - More specific search terms that might find niche businesses
-
-Please format your response as a simple comma-separated list that I can copy directly, like:
-term1, term2, term3, German term, ...
-
-Focus on terms that would actually appear in Google Maps business listings.`;
-
-            return prompt;
-        }
-
-        async function copyAIPrompt() {
-            const promptText = document.getElementById('aiPromptText').textContent;
-            try {
-                await navigator.clipboard.writeText(promptText);
-                document.getElementById('copySuccess').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('copySuccess').classList.add('hidden');
-                }, 3000);
-            } catch (err) {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = promptText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                document.getElementById('copySuccess').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('copySuccess').classList.add('hidden');
-                }, 3000);
-            }
-        }
-
-        // Close modal when clicking outside
-        document.addEventListener('click', function(e) {
-            const modal = document.getElementById('aiPromptModal');
-            if (e.target === modal) {
-                closeAIPromptModal();
-            }
-        });
 
         // Tab switching
         function switchMainTab(tab) {
