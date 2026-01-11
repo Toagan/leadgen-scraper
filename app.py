@@ -57,6 +57,133 @@ MIN_POPULATION_THOROUGH = 5000  # Thorough mode includes smaller cities
 # PLZ (Postal Code) file for maximum Germany coverage
 PLZ_FILE = 'data/plz_germany.csv'
 
+# =============================================================================
+# QUERY EXPANSION & CATEGORY BUNDLES
+# =============================================================================
+
+# Category bundles with synonyms and German translations
+# Each category has variations that will be searched when category mode is enabled
+CATEGORY_BUNDLES = {
+    'marketing': {
+        'name': 'Marketing & Advertising',
+        'queries': ['marketing agency', 'Werbeagentur', 'digital marketing agency', 'Marketingagentur', 'ad agency', 'advertising agency']
+    },
+    'dental': {
+        'name': 'Dental & Dentists',
+        'queries': ['dentist', 'Zahnarzt', 'dental clinic', 'Zahnklinik', 'dental practice', 'Zahnarztpraxis']
+    },
+    'legal': {
+        'name': 'Legal & Lawyers',
+        'queries': ['lawyer', 'Rechtsanwalt', 'law firm', 'Anwaltskanzlei', 'attorney', 'legal services']
+    },
+    'accounting': {
+        'name': 'Accounting & Tax',
+        'queries': ['accountant', 'Steuerberater', 'tax advisor', 'accounting firm', 'Buchhaltung', 'Wirtschaftsprüfer']
+    },
+    'real_estate': {
+        'name': 'Real Estate',
+        'queries': ['real estate agent', 'Immobilienmakler', 'real estate agency', 'Immobilienbüro', 'property agent']
+    },
+    'restaurant': {
+        'name': 'Restaurants & Dining',
+        'queries': ['restaurant', 'Restaurant', 'eatery', 'Gaststätte', 'bistro', 'dining']
+    },
+    'hotel': {
+        'name': 'Hotels & Accommodation',
+        'queries': ['hotel', 'Hotel', 'accommodation', 'Unterkunft', 'inn', 'Pension', 'guesthouse', 'Gasthaus']
+    },
+    'automotive': {
+        'name': 'Automotive & Car Services',
+        'queries': ['car dealership', 'Autohaus', 'auto repair', 'Autowerkstatt', 'car service', 'KFZ Werkstatt']
+    },
+    'medical': {
+        'name': 'Medical & Healthcare',
+        'queries': ['doctor', 'Arzt', 'medical practice', 'Arztpraxis', 'clinic', 'Klinik', 'healthcare']
+    },
+    'fitness': {
+        'name': 'Fitness & Gyms',
+        'queries': ['gym', 'Fitnessstudio', 'fitness center', 'personal trainer', 'sports club', 'Sportverein']
+    },
+    'beauty': {
+        'name': 'Beauty & Wellness',
+        'queries': ['beauty salon', 'Kosmetikstudio', 'spa', 'Wellness', 'hair salon', 'Friseur', 'nail salon']
+    },
+    'construction': {
+        'name': 'Construction & Building',
+        'queries': ['construction company', 'Bauunternehmen', 'builder', 'contractor', 'Handwerker', 'renovation']
+    },
+    'it_services': {
+        'name': 'IT & Technology',
+        'queries': ['IT company', 'IT Unternehmen', 'software company', 'tech company', 'IT services', 'web agency']
+    },
+    'consulting': {
+        'name': 'Consulting & Advisory',
+        'queries': ['consulting firm', 'Unternehmensberatung', 'business consultant', 'Berater', 'management consulting']
+    },
+    'photography': {
+        'name': 'Photography & Video',
+        'queries': ['photographer', 'Fotograf', 'photography studio', 'Fotostudio', 'videographer', 'wedding photographer']
+    }
+}
+
+def expand_query_variations(base_query, include_german=True, include_broad=True):
+    """
+    Expand a single query into multiple variations.
+    Returns list of query variations to search.
+    """
+    variations = []
+
+    # Always include exact match (quoted)
+    variations.append(f'"{base_query}"')
+
+    # Include broad match (unquoted) if enabled
+    if include_broad:
+        variations.append(base_query)
+
+    # Include German translation if enabled and query is in English
+    if include_german:
+        # Common English to German business term mappings
+        translations = {
+            'marketing agency': 'Werbeagentur',
+            'digital marketing': 'Online Marketing',
+            'dentist': 'Zahnarzt',
+            'lawyer': 'Rechtsanwalt',
+            'accountant': 'Steuerberater',
+            'real estate agent': 'Immobilienmakler',
+            'doctor': 'Arzt',
+            'restaurant': 'Restaurant',
+            'hotel': 'Hotel',
+            'gym': 'Fitnessstudio',
+            'photographer': 'Fotograf',
+            'consultant': 'Berater',
+            'contractor': 'Handwerker',
+            'plumber': 'Klempner',
+            'electrician': 'Elektriker',
+            'architect': 'Architekt',
+            'insurance agent': 'Versicherungsmakler',
+            'financial advisor': 'Finanzberater',
+            'web designer': 'Webdesigner',
+            'graphic designer': 'Grafikdesigner',
+        }
+
+        base_lower = base_query.lower()
+        for eng, ger in translations.items():
+            if eng in base_lower:
+                # Add German equivalent
+                german_query = base_query.lower().replace(eng, ger)
+                variations.append(f'"{german_query}"')
+                if include_broad:
+                    variations.append(german_query)
+                break
+
+    return variations
+
+def get_category_queries(category_key):
+    """Get all query variations for a category bundle."""
+    if category_key in CATEGORY_BUNDLES:
+        return CATEGORY_BUNDLES[category_key]['queries']
+    return []
+
 def load_plz_data(bundeslaender=None):
     """
     Load German PLZ (postal code) data with coordinates.
@@ -715,6 +842,156 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
 def index():
     return render_template('index.html')
 
+def multi_query_scraper_worker(queries, num_leads, region, filename,
+                               min_rating=0, min_reviews=0, scrape_mode='smart',
+                               bundeslaender=None):
+    """
+    Scraper that runs multiple query variations sequentially.
+    All results go into a single CSV with global deduplication.
+    """
+    global job_status
+    job_status["is_running"] = True
+    job_status["total_leads"] = 0
+    job_status["total_skipped"] = 0
+    job_status["new_logs"] = []
+    job_status["current_filename"] = filename
+    job_status["status_message"] = f"Starting multi-query scrape ({len(queries)} variations)..."
+
+    job_status["new_logs"].append(f"Running {len(queries)} query variations:")
+    for i, q in enumerate(queries[:5], 1):  # Show first 5
+        job_status["new_logs"].append(f"  {i}. {q}")
+    if len(queries) > 5:
+        job_status["new_logs"].append(f"  ... and {len(queries) - 5} more")
+
+    full_path = os.path.join(DATA_DIR, filename)
+
+    # Initialize CSV
+    with open(full_path, mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(CSV_HEADERS)
+
+    # Global deduplication across ALL queries
+    seen_ids = set()
+
+    # Determine min population
+    if scrape_mode == 'quick':
+        min_pop = 50000
+    elif scrape_mode == 'thorough':
+        min_pop = MIN_POPULATION_THOROUGH
+    else:
+        min_pop = MIN_POPULATION_DEFAULT
+
+    # Load cities once
+    target_file = REGION_FILES.get(region, 'data/cities.txt')
+    cities = []
+    try:
+        with open(target_file, 'r', encoding='utf-8-sig') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.lower().startswith("name,latitude"):
+                    continue
+                parts = line.split(',')
+                if len(parts) >= 3:
+                    lat = parts[1].strip()
+                    lon = parts[2].strip()
+                    population = 0
+                    if len(parts) >= 4:
+                        try:
+                            population = int(parts[3].strip())
+                        except ValueError:
+                            population = 50000
+
+                    if region == 'de' and population < min_pop:
+                        continue
+
+                    if region == 'de' and bundeslaender and len(bundeslaender) > 0:
+                        city_bundesland = get_bundesland(lat, lon)
+                        if city_bundesland not in bundeslaender:
+                            continue
+
+                    cities.append({
+                        "name": parts[0].strip(),
+                        "lat": lat,
+                        "lon": lon,
+                        "population": population
+                    })
+        cities.sort(key=lambda x: x['population'], reverse=True)
+    except FileNotFoundError:
+        job_status["status_message"] = f"Error: City list not found."
+        job_status["is_running"] = False
+        return
+
+    job_status["new_logs"].append(f"Loaded {len(cities)} cities")
+
+    # Run each query
+    for query_idx, query in enumerate(queries):
+        if job_status["total_leads"] >= int(num_leads):
+            break
+        if not job_status["is_running"]:
+            break
+
+        job_status["new_logs"].append(f"--- Query {query_idx + 1}/{len(queries)}: {query} ---")
+
+        for city in cities:
+            if job_status["total_leads"] >= int(num_leads):
+                break
+            if not job_status["is_running"]:
+                break
+
+            zoom_level, max_pages = get_city_scrape_config(city['population'])
+            job_status["current_city"] = f"{city['name']} [{query[:20]}...]"
+
+            city_specific_query = f"{query} in {city['name']}"
+
+            for page in range(max_pages):
+                if job_status["total_leads"] >= int(num_leads):
+                    break
+                if not job_status["is_running"]:
+                    break
+
+                data = get_places_by_gps(city_specific_query, city['lat'], city['lon'], region, page * 20, zoom_level)
+
+                if not data or 'places' not in data or not data['places']:
+                    break
+
+                new_items_count = 0
+                with open(full_path, mode='a', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    for p in data['places']:
+                        if job_status["total_leads"] >= int(num_leads):
+                            break
+
+                        place_data = extract_place_data(p, query, city['name'])
+                        pid = place_data['place_id']
+
+                        if pid and pid not in seen_ids:
+                            seen_ids.add(pid)
+
+                            if not passes_filters(place_data, min_rating, min_reviews, False, False):
+                                job_status["total_skipped"] += 1
+                                continue
+
+                            new_items_count += 1
+                            job_status["total_leads"] += 1
+
+                            if job_status["total_leads"] % 25 == 0:
+                                job_status["new_logs"].append(f"{job_status['total_leads']} leads found...")
+
+                            write_place_to_csv(writer, place_data)
+
+                if new_items_count == 0:
+                    break
+                time.sleep(0.3)
+
+    # Job Finished
+    job_status["is_running"] = False
+    job_status["status_message"] = "Job finished." if job_status["total_leads"] < int(num_leads) else "Limit reached."
+    job_status["new_logs"].append(f"Total unique businesses: {job_status['total_leads']}")
+    job_status["current_city"] = "Done"
+
+    save_to_history(queries[0] if queries else "multi-query", region, job_status["total_leads"], filename)
+
+
 @app.route('/run-scrape', methods=['POST'])
 def run_scrape():
     if job_status["is_running"]:
@@ -722,27 +999,68 @@ def run_scrape():
 
     data = request.json
 
-    # Generate a unique filename: marketing_agency_de_1698345.csv
-    # Sanitize search term for filename
-    safe_term = "".join([c if c.isalnum() else "_" for c in data.get('search_term')])
-    timestamp = int(time.time())
+    # Extract parameters
+    search_term = data.get('search_term', '')
     region = data.get('region', 'de')
-    filename = f"{safe_term}_{region}_{timestamp}.csv"
-
-    # Extract filter parameters
+    num_leads = int(data.get('num_leads', 10))
+    match_type = data.get('match_type', 'literal')
     min_rating = float(data.get('min_rating', 0))
     min_reviews = int(data.get('min_reviews', 0))
     scrape_mode = data.get('scrape_mode', 'smart')
-    bundeslaender = data.get('bundeslaender', [])  # List of Bundesland codes for Germany
+    bundeslaender = data.get('bundeslaender', [])
 
-    # Use PLZ-based scraper for maximum coverage mode (Germany only)
-    if scrape_mode == 'max' and region == 'de':
+    # NEW: Query expansion options
+    expand_queries = data.get('expand_queries', False)  # Enable query variations
+    category_key = data.get('category', None)  # Use category bundle instead of search term
+
+    # Generate filename
+    if category_key:
+        safe_term = category_key
+    else:
+        safe_term = "".join([c if c.isalnum() else "_" for c in search_term])
+    timestamp = int(time.time())
+    filename = f"{safe_term}_{region}_{timestamp}.csv"
+
+    # Determine queries to run
+    queries = []
+
+    if category_key and category_key in CATEGORY_BUNDLES:
+        # Use category bundle queries
+        queries = CATEGORY_BUNDLES[category_key]['queries']
+    elif expand_queries and region == 'de':
+        # Expand single query into variations
+        queries = expand_query_variations(search_term, include_german=True, include_broad=True)
+    else:
+        # Single query mode (original behavior)
+        if match_type == 'literal':
+            queries = [f'"{search_term}"']
+        else:
+            queries = [search_term]
+
+    # Choose worker based on mode
+    if len(queries) > 1:
+        # Multiple queries - use multi-query worker
+        thread = threading.Thread(
+            target=multi_query_scraper_worker,
+            args=(
+                queries,
+                num_leads,
+                region,
+                filename,
+                min_rating,
+                min_reviews,
+                scrape_mode,
+                bundeslaender
+            )
+        )
+    elif scrape_mode == 'max' and region == 'de':
+        # PLZ-based scraper for maximum coverage
         thread = threading.Thread(
             target=plz_scraper_worker,
             args=(
-                data.get('search_term'),
-                int(data.get('num_leads', 10)),
-                data.get('match_type'),
+                queries[0] if queries else search_term,
+                num_leads,
+                match_type,
                 filename,
                 min_rating,
                 min_reviews,
@@ -750,13 +1068,13 @@ def run_scrape():
             )
         )
     else:
-        # Use regular city-based scraper
+        # Regular city-based scraper
         thread = threading.Thread(
             target=scraper_worker,
             args=(
-                data.get('search_term'),
-                int(data.get('num_leads', 10)),
-                data.get('match_type'),
+                search_term,
+                num_leads,
+                match_type,
                 region,
                 filename,
                 min_rating,
@@ -897,6 +1215,21 @@ def get_bundeslaender():
     # Sort alphabetically by name
     states.sort(key=lambda x: x['name'])
     return jsonify(states)
+
+@app.route('/categories', methods=['GET'])
+def get_categories():
+    """Get list of available category bundles for search."""
+    categories = []
+    for key, data in CATEGORY_BUNDLES.items():
+        categories.append({
+            "key": key,
+            "name": data['name'],
+            "query_count": len(data['queries']),
+            "queries": data['queries']
+        })
+    # Sort alphabetically by name
+    categories.sort(key=lambda x: x['name'])
+    return jsonify(categories)
 
 # --- BATCH SCRAPE WORKER ---
 
