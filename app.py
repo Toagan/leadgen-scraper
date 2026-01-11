@@ -8,6 +8,7 @@ import requests
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory, Response
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
 # 1. Setup & Configuration
 load_dotenv()
@@ -15,6 +16,29 @@ app = Flask(__name__)
 
 # Configuration
 API_KEY = os.getenv("SERPER_API_KEY")
+
+# Supabase Configuration
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = None
+
+def init_supabase():
+    """Initialize Supabase client."""
+    global supabase
+    if SUPABASE_URL and SUPABASE_KEY:
+        try:
+            supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+            print("✓ Supabase connected successfully")
+            return True
+        except Exception as e:
+            print(f"✗ Supabase connection failed: {e}")
+            return False
+    else:
+        print("⚠ Supabase credentials not configured - running in local-only mode")
+        return False
+
+# Initialize Supabase on startup
+init_supabase()
 
 # Map regions to specific city files in the data/ folder
 REGION_FILES = {
@@ -125,6 +149,140 @@ CATEGORY_BUNDLES = {
         'queries': ['photographer', 'Fotograf', 'photography studio', 'Fotostudio', 'videographer', 'wedding photographer']
     }
 }
+
+# =============================================================================
+# SUPABASE DATABASE FUNCTIONS
+# =============================================================================
+
+def get_existing_place_ids(country=None, bundesland=None):
+    """Get all existing place_ids from database for deduplication."""
+    if not supabase:
+        return set()
+
+    try:
+        query = supabase.table('leadgen_leads').select('place_id')
+
+        if country:
+            query = query.eq('country', country)
+        if bundesland:
+            query = query.eq('bundesland', bundesland)
+
+        result = query.execute()
+        return set(row['place_id'] for row in result.data if row.get('place_id'))
+    except Exception as e:
+        print(f"Error fetching existing place_ids: {e}")
+        return set()
+
+def save_lead_to_db(lead_data, search_term, country, bundesland=None, city=None):
+    """Save a single lead to Supabase database."""
+    if not supabase:
+        return False
+
+    try:
+        record = {
+            'place_id': lead_data.get('placeId') or lead_data.get('place_id'),
+            'name': lead_data.get('title') or lead_data.get('name'),
+            'address': lead_data.get('address'),
+            'phone': lead_data.get('phoneNumber') or lead_data.get('phone'),
+            'website': lead_data.get('website'),
+            'rating': lead_data.get('rating'),
+            'review_count': lead_data.get('reviewsCount') or lead_data.get('review_count'),
+            'category': lead_data.get('category'),
+            'categories': ', '.join(lead_data.get('categories', [])) if isinstance(lead_data.get('categories'), list) else lead_data.get('categories'),
+            'latitude': lead_data.get('latitude'),
+            'longitude': lead_data.get('longitude'),
+            'country': country,
+            'bundesland': bundesland,
+            'city': city,
+            'search_term': search_term,
+            'price_range': lead_data.get('priceRange') or lead_data.get('price_range'),
+            'opening_hours': lead_data.get('openingHours') or lead_data.get('opening_hours'),
+            'description': lead_data.get('description'),
+        }
+
+        # Remove None values
+        record = {k: v for k, v in record.items() if v is not None}
+
+        # Upsert (insert or update on conflict)
+        result = supabase.table('leadgen_leads').upsert(record, on_conflict='place_id').execute()
+        return True
+    except Exception as e:
+        print(f"Error saving lead to DB: {e}")
+        return False
+
+def save_leads_batch(leads, search_term, country, bundesland=None):
+    """Save multiple leads to database in a batch."""
+    if not supabase or not leads:
+        return 0
+
+    saved_count = 0
+    records = []
+
+    for lead in leads:
+        city = lead.get('city', '')
+        record = {
+            'place_id': lead.get('placeId') or lead.get('place_id'),
+            'name': lead.get('title') or lead.get('name'),
+            'address': lead.get('address'),
+            'phone': lead.get('phoneNumber') or lead.get('phone'),
+            'website': lead.get('website'),
+            'rating': lead.get('rating'),
+            'review_count': lead.get('reviewsCount') or lead.get('review_count'),
+            'category': lead.get('category'),
+            'categories': ', '.join(lead.get('categories', [])) if isinstance(lead.get('categories'), list) else lead.get('categories'),
+            'latitude': lead.get('latitude'),
+            'longitude': lead.get('longitude'),
+            'country': country,
+            'bundesland': bundesland or lead.get('bundesland'),
+            'city': city,
+            'search_term': search_term,
+            'price_range': lead.get('priceRange') or lead.get('price_range'),
+            'opening_hours': lead.get('openingHours') or lead.get('opening_hours'),
+            'description': lead.get('description'),
+        }
+        # Remove None values
+        record = {k: v for k, v in record.items() if v is not None}
+        if record.get('place_id'):
+            records.append(record)
+
+    try:
+        # Batch upsert
+        if records:
+            supabase.table('leadgen_leads').upsert(records, on_conflict='place_id').execute()
+            saved_count = len(records)
+    except Exception as e:
+        print(f"Error batch saving leads: {e}")
+
+    return saved_count
+
+def get_db_stats(country=None):
+    """Get statistics from the database."""
+    if not supabase:
+        return None
+
+    try:
+        query = supabase.table('leadgen_leads').select('*', count='exact')
+        if country:
+            query = query.eq('country', country)
+
+        result = query.execute()
+        total = result.count if hasattr(result, 'count') else len(result.data)
+
+        # Get counts by category
+        return {
+            'total_leads': total,
+            'country': country
+        }
+    except Exception as e:
+        print(f"Error getting DB stats: {e}")
+        return None
+
+def get_new_leads_only(place_ids, country=None):
+    """Filter out place_ids that already exist in the database."""
+    existing = get_existing_place_ids(country)
+    return [pid for pid in place_ids if pid not in existing]
+
+# =============================================================================
 
 def expand_query_variations(base_query, include_german=True, include_broad=True):
     """
@@ -602,6 +760,16 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
     # Global set to track all seen business IDs across ALL cities (prevents duplicates)
     seen_ids = set()
 
+    # Load existing place_ids from database for cross-session deduplication
+    db_existing_ids = get_existing_place_ids(country=region)
+    if db_existing_ids:
+        seen_ids.update(db_existing_ids)
+        job_status["new_logs"].append(f"Loaded {len(db_existing_ids):,} existing leads from database")
+
+    # Track new leads for batch saving to DB
+    new_leads_for_db = []
+    db_new_count = 0
+
     # Scrape Loop with smart configuration per city
     for city in cities:
         if job_status["total_leads"] >= int(num_leads): break
@@ -646,6 +814,7 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
 
                         new_items_count += 1
                         job_status["total_leads"] += 1
+                        db_new_count += 1
 
                         # Log visible to user
                         rating_str = f" ({place_data['rating']})" if place_data['rating'] else ""
@@ -654,6 +823,16 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
                         # Write to CSV
                         write_place_to_csv(writer, place_data)
 
+                        # Queue for database save
+                        place_data['city'] = city['name']
+                        place_data['bundesland'] = get_bundesland(city['lat'], city['lon']) if region == 'de' else None
+                        new_leads_for_db.append(place_data)
+
+                        # Batch save every 50 leads
+                        if len(new_leads_for_db) >= 50:
+                            save_leads_batch(new_leads_for_db, search_term, region)
+                            new_leads_for_db = []
+
             if new_items_count == 0: break
             time.sleep(0.5)  # Respectful API delay
 
@@ -661,6 +840,10 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
         city_leads = job_status["total_leads"] - city_leads_before
         if city['population'] >= 100000 and city_leads > 0:
             job_status["new_logs"].append(f"  → {city['name']}: {city_leads} leads (zoom:{zoom_level}, pages:{max_pages})")
+
+    # Save remaining leads to database
+    if new_leads_for_db:
+        save_leads_batch(new_leads_for_db, search_term, region)
 
     # Job Finished
     job_status["is_running"] = False
@@ -671,6 +854,10 @@ def scraper_worker(search_term, num_leads, match_type, region, filename,
 
     if job_status["total_skipped"] > 0:
         job_status["new_logs"].append(f"Filtered out {job_status['total_skipped']} businesses")
+
+    # Log database stats
+    if supabase and db_new_count > 0:
+        job_status["new_logs"].append(f"💾 Saved {db_new_count} NEW leads to database")
 
     job_status["current_city"] = "Done"
 
@@ -733,6 +920,16 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
     # Global set to track all seen business IDs (prevents duplicates)
     seen_ids = set()
 
+    # Load existing place_ids from database for cross-session deduplication
+    db_existing_ids = get_existing_place_ids(country='de')
+    if db_existing_ids:
+        seen_ids.update(db_existing_ids)
+        job_status["new_logs"].append(f"Loaded {len(db_existing_ids):,} existing leads from database")
+
+    # Track new leads for batch saving to DB
+    new_leads_for_db = []
+    db_new_count = 0
+
     # Progress tracking
     total_plz = len(plz_list)
     processed_plz = 0
@@ -793,6 +990,7 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
 
                         new_items_count += 1
                         job_status["total_leads"] += 1
+                        db_new_count += 1
 
                         # Log visible to user (less verbose for PLZ mode)
                         if job_status["total_leads"] % 10 == 0:  # Log every 10th lead
@@ -802,6 +1000,16 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
 
                         # Write to CSV
                         write_place_to_csv(writer, place_data)
+
+                        # Queue for database save
+                        place_data['city'] = f"PLZ {plz}"
+                        place_data['bundesland'] = get_bundesland(lat, lon)
+                        new_leads_for_db.append(place_data)
+
+                        # Batch save every 100 leads (more for PLZ mode)
+                        if len(new_leads_for_db) >= 100:
+                            save_leads_batch(new_leads_for_db, search_term, 'de')
+                            new_leads_for_db = []
 
             # Dynamic pagination: stop if no new unique items found
             if new_items_count == 0:
@@ -819,6 +1027,10 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
         if plz_leads >= 10:  # Only log PLZs with significant results
             job_status["new_logs"].append(f"  → PLZ {plz}: {plz_leads} leads")
 
+    # Save remaining leads to database
+    if new_leads_for_db:
+        save_leads_batch(new_leads_for_db, search_term, 'de')
+
     # Job Finished
     job_status["is_running"] = False
     if job_status["total_leads"] >= int(num_leads):
@@ -830,6 +1042,11 @@ def plz_scraper_worker(search_term, num_leads, match_type, filename,
         job_status["new_logs"].append(f"Filtered out {job_status['total_skipped']} businesses")
 
     job_status["new_logs"].append(f"Total unique businesses found: {job_status['total_leads']}")
+
+    # Log database stats
+    if supabase and db_new_count > 0:
+        job_status["new_logs"].append(f"💾 Saved {db_new_count} NEW leads to database")
+
     job_status["current_city"] = "Done"
 
     # Save the completed run to history
@@ -872,6 +1089,16 @@ def multi_query_scraper_worker(queries, num_leads, region, filename,
 
     # Global deduplication across ALL queries
     seen_ids = set()
+
+    # Load existing place_ids from database for cross-session deduplication
+    db_existing_ids = get_existing_place_ids(country=region)
+    if db_existing_ids:
+        seen_ids.update(db_existing_ids)
+        job_status["new_logs"].append(f"Loaded {len(db_existing_ids):,} existing leads from database")
+
+    # Track new leads for batch saving to DB
+    new_leads_for_db = []
+    db_new_count = 0
 
     # Determine min population
     if scrape_mode == 'quick':
@@ -973,20 +1200,40 @@ def multi_query_scraper_worker(queries, num_leads, region, filename,
 
                             new_items_count += 1
                             job_status["total_leads"] += 1
+                            db_new_count += 1
 
                             if job_status["total_leads"] % 25 == 0:
                                 job_status["new_logs"].append(f"{job_status['total_leads']} leads found...")
 
                             write_place_to_csv(writer, place_data)
 
+                            # Queue for database save
+                            place_data['city'] = city['name']
+                            place_data['bundesland'] = get_bundesland(city['lat'], city['lon']) if region == 'de' else None
+                            new_leads_for_db.append(place_data)
+
+                            # Batch save every 50 leads
+                            if len(new_leads_for_db) >= 50:
+                                save_leads_batch(new_leads_for_db, query, region)
+                                new_leads_for_db = []
+
                 if new_items_count == 0:
                     break
                 time.sleep(0.3)
+
+    # Save remaining leads to database
+    if new_leads_for_db:
+        save_leads_batch(new_leads_for_db, queries[0] if queries else "multi-query", region)
 
     # Job Finished
     job_status["is_running"] = False
     job_status["status_message"] = "Job finished." if job_status["total_leads"] < int(num_leads) else "Limit reached."
     job_status["new_logs"].append(f"Total unique businesses: {job_status['total_leads']}")
+
+    # Log database stats
+    if supabase and db_new_count > 0:
+        job_status["new_logs"].append(f"💾 Saved {db_new_count} NEW leads to database")
+
     job_status["current_city"] = "Done"
 
     save_to_history(queries[0] if queries else "multi-query", region, job_status["total_leads"], filename)
@@ -1454,6 +1701,208 @@ def stop_scrape():
     job_status["is_running"] = False
     job_status["status_message"] = "Job stopped by user."
     return jsonify({"status": "success", "message": "Stop signal sent."})
+
+
+# =============================================================================
+# DATABASE API ENDPOINTS
+# =============================================================================
+
+@app.route('/api/db/stats', methods=['GET'])
+def api_db_stats():
+    """Get database statistics."""
+    if not supabase:
+        return jsonify({"status": "error", "message": "Database not connected"})
+
+    try:
+        country = request.args.get('country', None)
+
+        # Get total count
+        query = supabase.table('leadgen_leads').select('*', count='exact')
+        if country:
+            query = query.eq('country', country)
+        result = query.limit(1).execute()
+        total = result.count if hasattr(result, 'count') else 0
+
+        # Get counts by country
+        countries_result = supabase.table('leadgen_leads').select('country').execute()
+        country_counts = {}
+        for row in countries_result.data:
+            c = row.get('country', 'unknown')
+            country_counts[c] = country_counts.get(c, 0) + 1
+
+        # Get recent leads count (last 24h)
+        from datetime import timedelta
+        yesterday = (datetime.now() - timedelta(days=1)).isoformat()
+        recent_result = supabase.table('leadgen_leads').select('*', count='exact').gte('scraped_at', yesterday).limit(1).execute()
+        recent_count = recent_result.count if hasattr(recent_result, 'count') else 0
+
+        return jsonify({
+            "status": "success",
+            "stats": {
+                "total_leads": total,
+                "by_country": country_counts,
+                "last_24h": recent_count
+            }
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route('/api/db/leads', methods=['GET'])
+def api_db_leads():
+    """Get leads from database with filtering and pagination."""
+    if not supabase:
+        return jsonify({"status": "error", "message": "Database not connected"})
+
+    try:
+        # Pagination
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
+        offset = (page - 1) * per_page
+
+        # Filters
+        country = request.args.get('country', None)
+        bundesland = request.args.get('bundesland', None)
+        category = request.args.get('category', None)
+        search = request.args.get('search', None)
+        has_website = request.args.get('has_website', None)
+        has_phone = request.args.get('has_phone', None)
+        min_rating = request.args.get('min_rating', None)
+
+        # Build query
+        query = supabase.table('leadgen_leads').select('*', count='exact')
+
+        if country:
+            query = query.eq('country', country)
+        if bundesland:
+            query = query.eq('bundesland', bundesland)
+        if category:
+            query = query.ilike('category', f'%{category}%')
+        if search:
+            query = query.or_(f"name.ilike.%{search}%,address.ilike.%{search}%")
+        if has_website == 'true':
+            query = query.not_.is_('website', 'null')
+        if has_phone == 'true':
+            query = query.not_.is_('phone', 'null')
+        if min_rating:
+            query = query.gte('rating', float(min_rating))
+
+        # Order and paginate
+        query = query.order('scraped_at', desc=True).range(offset, offset + per_page - 1)
+
+        result = query.execute()
+
+        return jsonify({
+            "status": "success",
+            "leads": result.data,
+            "total": result.count if hasattr(result, 'count') else len(result.data),
+            "page": page,
+            "per_page": per_page
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route('/api/db/export', methods=['GET'])
+def api_db_export():
+    """Export leads from database as CSV."""
+    if not supabase:
+        return jsonify({"status": "error", "message": "Database not connected"})
+
+    try:
+        # Filters
+        country = request.args.get('country', None)
+        bundesland = request.args.get('bundesland', None)
+        has_website = request.args.get('has_website', None)
+        has_phone = request.args.get('has_phone', None)
+
+        # Build query
+        query = supabase.table('leadgen_leads').select('*')
+
+        if country:
+            query = query.eq('country', country)
+        if bundesland:
+            query = query.eq('bundesland', bundesland)
+        if has_website == 'true':
+            query = query.not_.is_('website', 'null')
+        if has_phone == 'true':
+            query = query.not_.is_('phone', 'null')
+
+        result = query.order('scraped_at', desc=True).execute()
+
+        # Generate CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(CSV_HEADERS)
+
+        for lead in result.data:
+            writer.writerow([
+                lead.get('search_term', ''),
+                lead.get('city', ''),
+                lead.get('name', ''),
+                lead.get('address', ''),
+                lead.get('phone', ''),
+                lead.get('website', ''),
+                lead.get('rating', ''),
+                lead.get('review_count', ''),
+                lead.get('category', ''),
+                lead.get('categories', ''),
+                lead.get('latitude', ''),
+                lead.get('longitude', ''),
+                lead.get('place_id', ''),
+                lead.get('opening_hours', ''),
+                lead.get('price_range', ''),
+                lead.get('description', '')
+            ])
+
+        output.seek(0)
+
+        # Generate filename
+        filename_parts = ['leads_db']
+        if country:
+            filename_parts.append(country)
+        if bundesland:
+            filename_parts.append(bundesland)
+        filename = '_'.join(filename_parts) + '.csv'
+
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route('/api/db/search-terms', methods=['GET'])
+def api_db_search_terms():
+    """Get unique search terms from database."""
+    if not supabase:
+        return jsonify({"status": "error", "message": "Database not connected"})
+
+    try:
+        country = request.args.get('country', None)
+
+        query = supabase.table('leadgen_leads').select('search_term')
+        if country:
+            query = query.eq('country', country)
+
+        result = query.execute()
+
+        # Get unique search terms with counts
+        term_counts = {}
+        for row in result.data:
+            term = row.get('search_term', '')
+            if term:
+                term_counts[term] = term_counts.get(term, 0) + 1
+
+        return jsonify({
+            "status": "success",
+            "search_terms": [{"term": k, "count": v} for k, v in sorted(term_counts.items(), key=lambda x: -x[1])]
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

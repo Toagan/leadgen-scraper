@@ -2,3 +2,4 @@ Flask
 google-search-results
 python-dotenv
 requests
+supabase
