@@ -83,7 +83,13 @@
                     <div class="grid grid-cols-2 gap-5">
                         <div>
                             <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Max Leads</label>
-                            <input type="number" id="numLeads" value="50" class="custom-input w-full px-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="numLeads" value="50" class="custom-input flex-1 px-4 py-3 rounded-xl text-sm text-gray-700 font-medium">
+                                <label class="flex items-center gap-1 cursor-pointer bg-white border border-gray-200 rounded-xl px-3 py-3 hover:border-amber-300 transition-all">
+                                    <input type="checkbox" id="unlimitedLeads" onchange="toggleUnlimited()" class="w-4 h-4 accent-amber-500">
+                                    <span class="text-xs font-medium text-gray-600">All</span>
+                                </label>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Target Region</label>
@@ -492,6 +498,22 @@
             }
         }
 
+        function toggleUnlimited() {
+            const checkbox = document.getElementById('unlimitedLeads');
+            const input = document.getElementById('numLeads');
+            if (checkbox.checked) {
+                input.disabled = true;
+                input.value = '';
+                input.placeholder = 'Unlimited';
+                input.classList.add('bg-amber-50', 'text-amber-600');
+            } else {
+                input.disabled = false;
+                input.value = '50';
+                input.placeholder = '';
+                input.classList.remove('bg-amber-50', 'text-amber-600');
+            }
+        }
+
         // Tab switching
         function switchMainTab(tab) {
             document.getElementById('panelSingle').classList.add('hidden');
@@ -698,7 +720,8 @@
 
         async function startScrape() {
             const term = document.getElementById('searchTerm').value;
-            const leads = document.getElementById('numLeads').value;
+            const unlimitedChecked = document.getElementById('unlimitedLeads').checked;
+            const leads = unlimitedChecked ? 9999999 : (document.getElementById('numLeads').value || 50);
             const region = document.getElementById('region').value;
 
             // Get filter values
